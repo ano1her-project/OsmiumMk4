@@ -9,7 +9,7 @@ namespace Osmium.Interface
         static Position position = Position.startingPosition;
         static bool enginePlayingWhite, enginePlayingBlack;
         static bool engineMovesAutomatically;
-        static int depth = 4;
+        static int depth = 3;
 
         static void Main()
         {
@@ -91,10 +91,10 @@ namespace Osmium.Interface
                 case "let_engine_make_move":
                 case "lemm":
                     var sw = Stopwatch.StartNew();
-                    var bestMove = Minimax.FindBestMove(position, depth);
+                    var bestMove = Minimax.FindBestMove(position, depth, out int eval);
                     var time = sw.Elapsed;
                     position.MakeMove(bestMove);
-                    Console.WriteLine($"Found best move in {time} and played it.");
+                    Console.WriteLine($"Found best move {bestMove} in {time} and played it. Eval = {eval}.");
                     PrettyPrinter.Print(position);
                     break;
                 default: // a move:

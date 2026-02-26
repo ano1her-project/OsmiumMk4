@@ -208,11 +208,11 @@ namespace Osmium.Tests
         {
             var position = Position.FromFEN("8/2k5/p1p5/8/8/5r2/5PPP/6K1 w - - 0 1");
             Move bestMove = new(new(6, 1), new(5, 2));
-            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1));
+            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1, out _));
             //
             position = Position.FromFEN("rnb1kbnr/ppp2ppp/8/3qp3/8/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 4");
             bestMove = new(new(2, 2), new(3, 4));
-            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1));
+            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1, out _));
         }
 
         [Fact]
@@ -220,15 +220,15 @@ namespace Osmium.Tests
         {
             var position = Position.FromFEN("1k6/ppp5/8/8/8/6P1/5P1P/4R1K1 w - - 0 1");
             Move bestMove = new(new(4, 0), new(4, 7));
-            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1));
+            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1, out _));
             //
             position = Position.FromFEN("1k5n/ppp5/8/8/8/1Q4P1/5P1P/6K1 w - - 0 1");
             bestMove = new(new(1, 2), new(6, 7));
-            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1));
+            Assert.Equal(bestMove, Minimax.FindBestMove(position, 1, out _));
             //
             position = Position.FromFEN("1k1b1r2/ppp5/8/8/8/6P1/3R1P1P/3R2K1 w - - 0 1");
             bestMove = new(new(3, 1), new(3, 7));
-            Assert.Equal(bestMove, Minimax.FindBestMove(position, 3));
+            Assert.Equal(bestMove, Minimax.FindBestMove(position, 3, out _));
         }
     }
 }

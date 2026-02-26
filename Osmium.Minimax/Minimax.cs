@@ -7,11 +7,11 @@ namespace Osmium.Engine
         static readonly int checkmateEval = 50_000;
         static readonly int stalemateEval = 0;
 
-        public static Move FindBestMove(Position position, int depth) // very similar to Evaluate() but also returns the move
+        public static Move FindBestMove(Position position, int depth, out int bestEval) // very similar to Evaluate() but also returns the move
         {
             var moves = position.GetAllLegalMoves();
-            Console.WriteLine($"Found {moves.Count} moves..");
-            int bestEval = int.MinValue;
+            Console.WriteLine($"Found {moves.Count} move(s)..");
+            bestEval = position.whiteToMove ? int.MinValue : int.MaxValue;
             Move bestMove = moves[0];
             Console.WriteLine(new string(' ', moves.Count) + moves.Count.ToString()); // print progress bar
             foreach (var move in moves)
@@ -38,7 +38,7 @@ namespace Osmium.Engine
             if (depth == 0)
                 return Estimator.GetEstimate(position);
             // otehrwise, just recurse deeper
-            int bestEval = int.MinValue;
+            int bestEval = position.whiteToMove ? int.MinValue : int.MaxValue;
             foreach (var move in moves)
             {
                 int eval = Evaluate(position.AfterMove(move), depth - 1);
