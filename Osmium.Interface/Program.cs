@@ -41,6 +41,7 @@ namespace Osmium.Interface
                     PrettyPrinter.Print(position);
                     break;
                 case "set_white_player":
+                case "white":
                     switch (subs[1])
                     {
                         case "engine":
@@ -55,6 +56,7 @@ namespace Osmium.Interface
                     }
                     break;
                 case "set_black_player":
+                case "black":
                     switch (subs[1])
                     {
                         case "engine":
@@ -69,6 +71,7 @@ namespace Osmium.Interface
                     }
                     break;
                 case "set_engine_automatic_moves":
+                case "auto":
                     switch (subs[1])
                     {
                         case "yes":
@@ -83,6 +86,8 @@ namespace Osmium.Interface
                     }
                     break;
                 case "set_depth":
+                case "depth":
+                case "d":
                     depth = int.Parse(subs[1]);
                     break;
                 case "estimate":
