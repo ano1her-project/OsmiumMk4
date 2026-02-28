@@ -33,17 +33,36 @@ namespace Osmium.Interface
                     Console.WriteLine("set_black_player (engine | player)    - Sets who controls the black pieces.");
                     Console.WriteLine("set_engine_automatic_moves (yes | no) - Sets whether the engine waits for the let_engine_make_move command.");
                     Console.WriteLine("set_depth (depth)                     - Sets the engine search depth.");
-                    Console.WriteLine("get_fen                               - Prints the FEN of the position.");
+                    Console.WriteLine("get_fen                               - Prints the FEN of the current position.");
                     Console.WriteLine("estimate                              - Calculates the static evaluation of the current position.");
+                    Console.WriteLine("evaluate                              - Evaluates the current position.");
                     Console.WriteLine("perft (depth)                         - Counts leaf nodes at a given depth.");
                     Console.WriteLine("let_engine_make_move                  - Has the engine choose and play the best move.");
                     Console.WriteLine("(square in algebraic format)          - Starts a move.");
 
                     break;
                 case "abbreviate":
+                    Console.WriteLine(subs[1] switch
+                    {
+                        "help" => "no abbreviation.",
+                        "abbreviate" => "no abbrevioation",
+                        "set_position" => "position, pos",
+                        "set_white_player" => "white",
+                        "set_black_player" => "black",
+                        "set_engine_automatic_moves" => "auto",
+                        "set_depth" => "depth, d",
+                        "get_fen" => "fen",
+                        "estimate" => "est",
+                        "evaluate" => "eval",
+                        "perft" => "no abbreviation.",
+                        "let_engine_make_move" => "lemm",
+                        _ => "command doesn't exist."
+                    });
                     break;
                 case "set_position":
-                    if (subs[1] == "starting" || subs[1] == "start")
+                case "position":
+                case "pos":
+                    if (subs[1] == "startpos" || subs[1] == "start")
                     {
                         position = Position.startingPosition.DeepCopy();
                         PrettyPrinter.Print(position);
@@ -113,10 +132,16 @@ namespace Osmium.Interface
                     depth = int.Parse(subs[1]);
                     break;
                 case "get_fen":
+                case "fen":
                     Console.WriteLine(position.ToFEN());
                     break;
                 case "estimate":
+                case "est":
                     Console.WriteLine($"Estimated evaluation: {Estimator.GetEstimate(position)}.");
+                    break;
+                case "evaluation":
+                case "eval":
+                    Console.WriteLine($"Evaluation: {Minimax.Evaluate(position, depth, int.MinValue, int.MaxValue)}");
                     break;
                 case "perft":
                     Console.WriteLine("total amount: " + Minimax.CountLeafNodesAtDepthByMove(position, int.Parse(subs[1])));
