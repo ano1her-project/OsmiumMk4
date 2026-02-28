@@ -325,15 +325,15 @@ namespace Osmium.Core
                     break;
                 case Move.Flag.CastlingKingside:
                     rank = piece.isWhite ? 0 : 7;
-                    SetPiece(new(rank, 7), null);
-                    SetPiece(new(rank, 5), new(Piece.Type.Rook, piece.isWhite));
+                    SetPiece(rank, 7, null);
+                    SetPiece(rank, 5, new(Piece.Type.Rook, piece.isWhite));
                     castlingAvailability &= piece.isWhite ? ~CastlingAvailability.WhiteKingside : ~CastlingAvailability.BlackKingside;
                     castlingAvailability &= piece.isWhite ? ~CastlingAvailability.WhiteQueenside : ~CastlingAvailability.BlackQueenside;
                     break;
                 case Move.Flag.CastlingQueenside:
                     rank = piece.isWhite ? 0 : 7;
-                    SetPiece(new(rank, 0), null);
-                    SetPiece(new(rank, 3), new(Piece.Type.Rook, piece.isWhite));
+                    SetPiece(rank, 0, null);
+                    SetPiece(rank, 3, new(Piece.Type.Rook, piece.isWhite));
                     castlingAvailability &= piece.isWhite ? ~CastlingAvailability.WhiteKingside : ~CastlingAvailability.BlackKingside;
                     castlingAvailability &= piece.isWhite ? ~CastlingAvailability.WhiteQueenside : ~CastlingAvailability.BlackQueenside;
                     break;
@@ -363,7 +363,7 @@ namespace Osmium.Core
 
         public void UnmakeMove(Move move, UndoInfo undoInfo)
         {
-            var piece = GetPiece(move.to) ?? throw new Exception();
+            var piece = GetPiece(move.to) ?? throw new InvalidOperationException();
             whiteToMove = !whiteToMove;
             enPassantSquare = undoInfo.previousEnPassantSquare;
             castlingAvailability = undoInfo.previousCastlingAvailability;
@@ -378,15 +378,15 @@ namespace Osmium.Core
                     rank = piece.isWhite ? 0 : 7;
                     SetPiece(move.from, piece);
                     SetPiece(move.to, null);
-                    SetPiece(new(rank, 5), null);
-                    SetPiece(new(rank, 7), new(Piece.Type.Rook, piece.isWhite));
+                    SetPiece(rank, 5, null);
+                    SetPiece(rank, 7, new(Piece.Type.Rook, piece.isWhite));
                     break;
                 case Move.Flag.CastlingQueenside:
                     rank = piece.isWhite ? 0 : 7;
                     SetPiece(move.from, piece);
                     SetPiece(move.to, null);
-                    SetPiece(new(rank, 3), null);
-                    SetPiece(new(rank, 0), new(Piece.Type.Rook, piece.isWhite));
+                    SetPiece(rank, 3, null);
+                    SetPiece(rank, 0, new(Piece.Type.Rook, piece.isWhite));
                     break;
                 case Move.Flag.TwoSquarePawnPush:
                     SetPiece(move.from, piece);
@@ -683,14 +683,14 @@ namespace Osmium.Core
             result.AddRange(GetLeaperMoves(king, kingColor, Vector2.allDirections));
             // castling kingside
             if (kingColor && castlingAvailability.HasFlag(CastlingAvailability.WhiteKingside) && GetPiece(0, 5) is null && GetPiece(0, 6) is null)
-                result.Add(new(king, new(0, 6), Move.Flag.CastlingKingside));
+                result.Add(new(king, new(6, 0), Move.Flag.CastlingKingside));
             else if (!kingColor && castlingAvailability.HasFlag(CastlingAvailability.BlackKingside) && GetPiece(7, 5) is null && GetPiece(7, 6) is null)
-                result.Add(new(king, new(7, 6), Move.Flag.CastlingKingside));
+                result.Add(new(king, new(6, 7), Move.Flag.CastlingKingside));
             // castling queenside
             if (kingColor && castlingAvailability.HasFlag(CastlingAvailability.WhiteQueenside) && GetPiece(0, 3) is null && GetPiece(0, 2) is null && GetPiece(0, 1) is null)
-                result.Add(new(king, new(0, 2), Move.Flag.CastlingQueenside));
+                result.Add(new(king, new(2, 0), Move.Flag.CastlingQueenside));
             else if (!kingColor && castlingAvailability.HasFlag(CastlingAvailability.BlackQueenside) && GetPiece(7, 3) is null && GetPiece(7, 2) is null && GetPiece(7, 1) is null)
-                result.Add(new(king, new(7, 2), Move.Flag.CastlingQueenside));
+                result.Add(new(king, new(2, 7), Move.Flag.CastlingQueenside));
             //
             return result;
         }
