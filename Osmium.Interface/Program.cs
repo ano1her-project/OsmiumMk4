@@ -37,7 +37,13 @@ namespace Osmium.Interface
 
                     break;
                 case "set_position":
-                    position = Position.FromFEN(subs[1]);
+                    if (subs.Length != 7)
+                    {
+                        Console.WriteLine("invalid argument");
+                        break;
+                    }
+                    // we join the split subs back together,, probably not ideal but whatever
+                    position = Position.FromFEN($"{subs[1]} {subs[2]} {subs[3]} {subs[4]} {subs[5]} {subs[6]}");
                     PrettyPrinter.Print(position);
                     break;
                 case "set_white_player":

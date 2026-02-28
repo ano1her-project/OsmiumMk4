@@ -32,7 +32,7 @@ namespace Osmium.Engine
                     if (bestEval > bestEvalWhiteCanGuarantee)
                         bestEvalWhiteCanGuarantee = bestEval;
                 }
-                else
+                else // black to move
                 {
                     if (bestEval <= bestEvalWhiteCanGuarantee) // ..then white will not let black get here.
                         break;
