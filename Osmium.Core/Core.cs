@@ -609,17 +609,19 @@ namespace Osmium.Core
             Vector2 forward = pawnColor ? Vector2.up : Vector2.down;
             bool isAboutToPromote = pawn.rank == (pawnColor ? 6 : 1);
             // push
-            if (GetPiece(pawn + forward) is null)
+            var oneStepForward = pawn + forward;
+            if (GetPiece(oneStepForward) is null)
             {
                 // push 1 square forward
-                    result.AddRange(MoveWithOrWithoutPromotions(pawn, pawn + forward, isAboutToPromote));
+                    result.AddRange(MoveWithOrWithoutPromotions(pawn, oneStepForward, isAboutToPromote));
                 // push 2 squares forward
-                if (pawn.rank == (pawnColor ? 1 : 6) && GetPiece(pawn + forward + forward) is null)
-                    result.Add(new(pawn, pawn + forward + forward, Move.Flag.TwoSquarePawnPush)); // cannot land on the last rank (and promote)
+                var twoStepsForward = oneStepForward + forward;
+                if (pawn.rank == (pawnColor ? 1 : 6) && GetPiece(twoStepsForward) is null)
+                    result.Add(new(pawn, twoStepsForward, Move.Flag.TwoSquarePawnPush)); // cannot land on the last rank (and promote)
             }
             // captures
-            Vector2 leftCapture = pawn + forward + Vector2.left;
-            if (leftCapture.IsInBounds())
+            Vector2 leftCapture = oneStepForward + Vector2.left;
+            if (leftCapture.file > 0) // is in bounds
             {
                 var leftCapturePiece = GetPiece(leftCapture);
                 if (leftCapturePiece is not null && leftCapturePiece?.isWhite != pawnColor)
@@ -627,8 +629,8 @@ namespace Osmium.Core
                 else if (enPassantSquare is not null && enPassantSquare == leftCapture)
                     result.Add(new(pawn, leftCapture, Move.Flag.EnPassant)); // cannot capture en passant and land on the last rank
             }
-            Vector2 rightCapture = pawn + forward + Vector2.right;
-            if (rightCapture.IsInBounds())
+            Vector2 rightCapture = oneStepForward + Vector2.right;
+            if (rightCapture.file <= 8) // is in bounds
             {
                 var rightCapturePiece = GetPiece(rightCapture);
                 if (rightCapturePiece is not null && rightCapturePiece?.isWhite != pawnColor)
