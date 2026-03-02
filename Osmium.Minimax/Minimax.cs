@@ -15,20 +15,25 @@ namespace Osmium.Engine
 
         public static Move FindBestMove(Position position, int depth, int evalSortDepth, int bestEvalWhiteCanGuarantee, int bestEvalBlackCanGuarantee, DebugPrintMode debugPrintMode, out int bestEval) // very similar to Evaluate() but also returns the move
         {
-            var moves = position.GetAllLegalMoves().ToArray();
+            var moves = position.GetAllPseudoLegalMoves().ToArray();
             Console.WriteLine($"Found {moves.Length} move(s)..");            
             // preliminary pass at lower depth to sort the moves by eval
             if (evalSortDepth < depth && evalSortDepth > 0)
             {
                 Console.WriteLine($"Sorting moves by eval at depth {evalSortDepth}..");
-                int[] evals = new int[moves.Length];
-                for (int i = 0; i < moves.Length; i++)
+                List<int> evals = [];
+                foreach (var move in moves)
                 {
-                    position.MakeMove(moves[i], out var undoInfo);
-                    evals[i] = Evaluate(position, evalSortDepth - 1, bestEvalWhiteCanGuarantee, bestEvalBlackCanGuarantee);
-                    position.UnmakeMove(moves[i], undoInfo);
+                    position.MakeMove(move, out var undoInfo);
+                    if (position.IsKingInCheck(!position.whiteToMove))
+                    {
+                        position.UnmakeMove(move, undoInfo);
+                        continue;
+                    }
+                    evals.Add(Evaluate(position, evalSortDepth - 1, bestEvalWhiteCanGuarantee, bestEvalBlackCanGuarantee));
+                    position.UnmakeMove(move, undoInfo);
                 }
-                Array.Sort(evals, moves); // lowest to highest
+                Array.Sort(evals.ToArray(), moves); // lowest to highest
                 if (position.whiteToMove)
                     Array.Reverse(moves); // highest to lowest
             }
@@ -41,6 +46,11 @@ namespace Osmium.Engine
             foreach (var move in moves)
             {
                 position.MakeMove(move, out var undoInfo);
+                if (position.IsKingInCheck(!position.whiteToMove))
+                {
+                    position.UnmakeMove(move, undoInfo);
+                    continue;
+                }
                 int eval = Evaluate(position, depth - 1, bestEvalWhiteCanGuarantee, bestEvalBlackCanGuarantee);
                 position.UnmakeMove(move, undoInfo);
                 bool isBetterThanPrevious = position.whiteToMove ? (eval > bestEval) : (eval < bestEval);

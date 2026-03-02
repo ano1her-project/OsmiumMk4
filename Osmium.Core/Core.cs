@@ -436,13 +436,15 @@ namespace Osmium.Core
 
         public Piece? Raycast(Vector2 origin, Vector2 direction)
         {
-            Vector2 pos = origin;
+            int rank = origin.rank;
+            int file = origin.file;
             while (true)
             {
-                pos += direction;
-                if (!pos.IsInBounds())
+                rank += direction.rank;
+                file += direction.file;
+                if (rank < 0 || rank >= 8 || file < 0 || file >= 8)
                     return null;
-                var piece = GetPiece(pos);
+                var piece = GetPiece(rank, file);
                 if (piece is not null)
                     return piece;
             }
@@ -559,6 +561,9 @@ namespace Osmium.Core
         }
 
         public List<Move> GetAllLegalMoves()
+            => FilterLegalMoves(GetAllPseudoLegalMoves());
+
+        public List<Move> GetAllPseudoLegalMoves()
         {
             List<Move> result = [];
             // get all moves not acknowledging checks
@@ -572,8 +577,7 @@ namespace Osmium.Core
                     result.AddRange(GetPieceMoves((Piece)piece, new(file, rank)));
                 }
             }
-            // filter out every move that'd leave the king in check
-            return FilterLegalMoves(result);
+            return result;
         }
 
         public List<Move> GetPieceMoves(Piece piece, Vector2 v)
