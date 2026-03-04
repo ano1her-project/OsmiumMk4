@@ -250,6 +250,45 @@ namespace Osmium.Core
             return new(newBoard, newWhiteKing, newBlackKing, newWhiteToMove, newCastlingAvailability, newEnPassantSquare, newHalfmoveClock, newFullmoves);
         }
 
+        public override bool Equals(object? obj)
+            => obj is Position position && this == position;
+
+        public static bool operator ==(Position a, Position b)
+        {
+            if (a.whiteToMove != b.whiteToMove ||
+                a.castlingAvailability != b.castlingAvailability ||
+                a.halfmoveClock != b.halfmoveClock ||
+                a.fullmoves != b.fullmoves)
+                return false;
+            if (a.enPassantSquare is null && b.enPassantSquare is not null)
+                return false;
+            if (a.enPassantSquare is not null && b.enPassantSquare is null)
+                return false;
+            if (a.enPassantSquare is not null && b.enPassantSquare is not null && a.enPassantSquare != b.enPassantSquare)
+                return false;
+            for (int rank = 0; rank < 8; rank++)
+            {
+                for (int file = 0; file < 8; file++)
+                {
+                    var A = a.GetPiece(rank, file);
+                    var B = b.GetPiece(rank, file);
+                    if (A is null && B is not null)
+                        return true;
+                    if (A is not null && B is null)
+                        return true;
+                    if (A is not null && B is not null && A != B)
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        public static bool operator !=(Position a, Position b)
+            => !(a == b);
+
+        public override int GetHashCode()
+            => HashCode.Combine(board, whiteToMove, castlingAvailability, enPassantSquare, halfmoveClock, fullmoves);
+
         public override string ToString()
             => ToFEN();
 

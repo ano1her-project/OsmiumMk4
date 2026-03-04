@@ -13,8 +13,11 @@ namespace Osmium.Engine
         static readonly int checkmateEval = 50_000;
         static readonly int stalemateEval = 0;
 
+        static Dictionary<int, int> transpositionTable = [];
+
         public static Move FindBestMove(Position position, int depth, int evalSortDepth, int bestEvalWhiteCanGuarantee, int bestEvalBlackCanGuarantee, DebugPrintMode debugPrintMode, out int bestEval) // very similar to Evaluate() but also returns the move
         {
+            transpositionTable = [];
             var moves = position.GetAllPseudoLegalMoves().ToArray();
             Console.WriteLine($"Found {moves.Length} move(s)..");            
             // preliminary pass at lower depth to sort the moves by eval
@@ -38,6 +41,7 @@ namespace Osmium.Engine
                     Array.Reverse(moves); // highest to lowest
             }
             //
+            transpositionTable = [];
             Console.WriteLine($"Evaluating moves at depth {depth}..");
             bestEval = position.whiteToMove ? int.MinValue : int.MaxValue;
             Move bestMove = moves[0];
@@ -89,6 +93,9 @@ namespace Osmium.Engine
 
         public static int Evaluate(Position position, int depth, int bestEvalWhiteCanGuarantee, int bestEvalBlackCanGuarantee)
         {
+            int positionHashCode = position.GetHashCode();
+            if (transpositionTable.TryGetValue(positionHashCode, out var evalFromTable))
+                return evalFromTable;
             // first check for checkmate or stalemate
             var moves = position.GetAllLegalMoves();
             if (moves.Count == 0)
@@ -98,6 +105,7 @@ namespace Osmium.Engine
                 return Estimator.GetEstimate(position);                
             // otehrwise, just recurse deeper
             int bestEval = position.whiteToMove ? int.MinValue : int.MaxValue;
+            Move bestMove = moves[0];
             foreach (var move in moves)
             {
                 position.MakeMove(move, out var undoInfo);
@@ -107,6 +115,7 @@ namespace Osmium.Engine
                 if (!isBetterThanPrevious)
                     continue;
                 bestEval = eval;
+                bestMove = move;
                 if (position.whiteToMove)
                 {
                     if (bestEval >= bestEvalBlackCanGuarantee) // ..then black will not let white get here.
@@ -122,6 +131,7 @@ namespace Osmium.Engine
                         bestEvalBlackCanGuarantee = bestEval;
                 }
             }
+            try { transpositionTable.Add(positionHashCode, bestEval); } catch (Exception) { }
             return bestEval;
         }
     }
