@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Osmium.Core\Osmium.Core.csproj" />
-    <ProjectReference Include="..\Osmium.Heuristics\Heuristics.csproj" />
+    <ProjectReference Include="..\Osmium.Heuristics\Osmium.Heuristics.csproj" />
     <ProjectReference Include="..\Osmium.Minimax\Osmium.Minimax.csproj" />
   </ItemGroup>
 

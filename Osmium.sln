@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Osmium.Tests", "Osmium.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Osmium.Minimax", "Osmium.Minimax\Osmium.Minimax.csproj", "{B0229F4C-90FF-4740-AFB9-DFB6B51B0FD3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Osmium.Heuristics", "Osmium.Heuristics\Osmium.Heuristics.csproj", "{B1B8EC0F-3B3F-4306-CCD3-B29CBB706CDC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{B0229F4C-90FF-4740-AFB9-DFB6B51B0FD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0229F4C-90FF-4740-AFB9-DFB6B51B0FD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0229F4C-90FF-4740-AFB9-DFB6B51B0FD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1B8EC0F-3B3F-4306-CCD3-B29CBB706CDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1B8EC0F-3B3F-4306-CCD3-B29CBB706CDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1B8EC0F-3B3F-4306-CCD3-B29CBB706CDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1B8EC0F-3B3F-4306-CCD3-B29CBB706CDC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
