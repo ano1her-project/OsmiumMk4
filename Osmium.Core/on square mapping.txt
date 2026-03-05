@@ -1,39 +1,39 @@
-square index = 8 * rank + file;
+square index = 8 * file + rank;
 
 thus:
 a1 = 0
-a2 = 1
+b1 = 1
 ...
-b1 = 8
+a2 = 8
 b2 = 9
 ...
 h8 = 63
 
 in a bitboard:
 a1 = 2^0 = 1
-a2 = 2^1 = 2
+b1 = 2^1 = 2
 ...
-b1 = 2^8 = 256
+a2 = 2^8 = 256
 b2 = 2^9 = 512
 ...
 h8 = 2^63
 
 shifting left:
-a1 becomes a2 becomes a3 ...
+a1 becomes b1 becomes c1 ...
 ..0001     ..0010     ..0100
-a8 becomes b1
+h1 becomes a2
 
 shifting right:
-h8 becomes h7 becomes h6 ...
+h8 becomes g8 becomes f8 ...
 1000..     0100..     0010..
-h1 becomes g8
+a8 becomes h7
 
 shifting up = shifting left 8 times
-a1 becomes b1
+a1 becomes a2
 a1 = .._00000000_00000001
-b1 = .._00000001_00000000
+a2 = .._00000001_00000000
 
 shifting down = shifting right 8 times
-b1 becomes a1
-b1 = .._00000001_00000000
+a2 becomes a1
+a2 = .._00000001_00000000
 a1 = .._00000000_00000001
