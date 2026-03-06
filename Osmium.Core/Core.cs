@@ -1,6 +1,6 @@
 ﻿namespace Osmium.Core;
 
-public class BitboardOperations
+public class Bitboards
 {
     static readonly ulong aFile = 1ul | (1ul << 8) | (1ul << 16) | (1ul << 24) | (1ul << 32) | (1ul << 40) | (1ul << 48) | (1ul << 56);
     static readonly ulong bFile = (1ul << 1) | (1ul << 9) | (1ul << 17) | (1ul << 25) | (1ul << 33) | (1ul << 41) | (1ul << 49) | (1ul << 57);
@@ -75,6 +75,62 @@ public class BitboardOperations
 
     public static ulong ShiftNorthNorthwest(ulong bitboard)
         => (bitboard & notAFile) << 15;
+
+    // precalculated attacks:
+
+    static ulong[][] pawnAttacks = PrecalculatePawnAttacks();
+    static ulong[] knightAttacks = PrecalculateKnightAttacks();
+    static ulong[] kingAttacks = PrecalculateKingAttacks();
+
+    static ulong[][] PrecalculatePawnAttacks()
+    {
+        ulong[][] result = [new ulong[64], new ulong[64]];
+        var pawn = 1ul;
+        for (int i = 0; i < 64; i++, pawn <<= 1)
+        {
+            result[(int)PieceColor.White][i] = ShiftNortheast(pawn) | ShiftNorthwest(pawn);
+            result[(int)PieceColor.Black][i] = ShiftSoutheast(pawn) | ShiftSouthwest(pawn);
+        }
+        return result;
+    }
+
+    static ulong[] PrecalculateKnightAttacks()
+    {
+        var result = new ulong[64];
+        var knight = 1ul;
+        for (int i = 0; i < 64; i++, knight <<= 1)
+        {
+            result[i] =
+                ShiftNorthNortheast(knight) |
+                ShiftEastNortheast(knight) |
+                ShiftEastSoutheast(knight) |
+                ShiftSouthSoutheast(knight) |
+                ShiftSouthSouthwest(knight) |
+                ShiftWestSouthwest(knight) |
+                ShiftWestNorthwest(knight) |
+                ShiftNorthNorthwest(knight);
+        }
+        return result;
+    }
+
+    static ulong[] PrecalculateKingAttacks()
+    {
+        var result = new ulong[64];
+        var king = 1ul;
+        for (int i = 0; i < 64; i++, king <<= 1)
+        {
+            result[i] =
+                ShiftNorth(king) |
+                ShiftNortheast(king) |
+                ShiftEast(king) |
+                ShiftSoutheast(king) |
+                ShiftSouth(king) |
+                ShiftSouthwest(king) |
+                ShiftWest(king) |
+                ShiftNorthwest(king);
+        }
+        return result;
+    }
 }
 
 public enum PieceType
@@ -90,6 +146,12 @@ public enum PieceType
     BlackKnight,
     BlackRook,
     BlackQueen,
+}
+
+public enum PieceColor
+{
+    White,
+    Black
 }
 
 public class Position
