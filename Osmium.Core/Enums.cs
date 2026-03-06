@@ -2,17 +2,12 @@
 
 public enum PieceType
 {
-    WhitePawn,
-    WhiteBishop,
-    WhiteKnight,
-    WhiteRook,
-    WhiteQueen,
-    WhiteKing,
-    BlackPawn,
-    BlackBishop,
-    BlackKnight,
-    BlackRook,
-    BlackQueen,
+    Pawn,
+    Bishop,
+    Knight,
+    Rook,
+    Queen,
+    King
 }
 
 public enum PieceColor
