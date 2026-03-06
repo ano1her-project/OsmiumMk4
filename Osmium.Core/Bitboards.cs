@@ -132,32 +132,3 @@ public class Bitboards
         return result;
     }
 }
-
-public enum PieceType
-{
-    WhitePawn,
-    WhiteBishop,
-    WhiteKnight,
-    WhiteRook,
-    WhiteQueen,
-    WhiteKing,
-    BlackPawn,
-    BlackBishop,
-    BlackKnight,
-    BlackRook,
-    BlackQueen,
-}
-
-public enum PieceColor
-{
-    White,
-    Black
-}
-
-public class Position
-{
-    ulong[] pieceBitboards = new ulong[12];
-
-    public ulong GetPieceBitboard(PieceType pieceType)
-        => pieceBitboards[(int)pieceType];
-}
