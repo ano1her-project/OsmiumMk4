@@ -1,4 +1,8 @@
-square index = 8 * file + rank;
+﻿the index of a2 should be more than the index of a1
+the index of b1 should be more than the index of a1
+from this, let's define:
+
+square index = 8 * rank + file;
 
 thus:
 a1 = 0
@@ -9,6 +13,13 @@ b2 = 9
 ...
 h8 = 63
 
+.
+.
+.
+2 8 9 10 ...
+1 0 1 2 3 4 5 6 7
+  a b c d e f g h 
+
 in a bitboard:
 a1 = 2^0 = 1
 b1 = 2^1 = 2
@@ -18,22 +29,26 @@ b2 = 2^9 = 512
 ...
 h8 = 2^63
 
-shifting left:
+i use west, east etc. instead of left and right in order to distinguish it from *shifting* left or right
+in fact, shifting west (≈ left) requires a bitwise shift right
+in fact, shifting east (≈ right) requires a bitwise shift left
+
+bitwise shift left:
 a1 becomes b1 becomes c1 ...
 ..0001     ..0010     ..0100
 h1 becomes a2
 
-shifting right:
+bitwise shift right:
 h8 becomes g8 becomes f8 ...
 1000..     0100..     0010..
 a8 becomes h7
 
-shifting up = shifting left 8 times
+shifting north = shifting left 8 times
 a1 becomes a2
 a1 = .._00000000_00000001
 a2 = .._00000001_00000000
 
-shifting down = shifting right 8 times
+shifting south = shifting right 8 times
 a2 becomes a1
 a2 = .._00000001_00000000
 a1 = .._00000000_00000001
