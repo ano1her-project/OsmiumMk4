@@ -15,9 +15,74 @@ public class Position
     public ulong GetPieceOfColorBitboard(PieceType pieceType, PieceColor pieceColor)
         => pieceBitboards[(int)pieceType] & colorBitboards[(int)pieceColor];
 
-    public ulong GetPawnPushTargets(PieceColor pawnColor)
+    ulong GetPawnPushTargetBitboard(PieceColor pawnColor)
     {
         var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
         return (pawnColor == PieceColor.White ? Bitboards.ShiftNorth(pawns) : Bitboards.ShiftSouth(pawns)) & emptySquareSet;
+    }
+
+    List<Move> GetPawnPushes(PieceColor pawnColor)
+    {        
+        var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
+        var targets = (pawnColor == PieceColor.White ? Bitboards.ShiftNorth(pawns) : Bitboards.ShiftSouth(pawns)) & emptySquareSet;
+        List<Move> result = [];
+        while (targets != 0)
+        {
+            pawns = Bitboards.PopLeastSignificantOne(pawns, out int from);
+            targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+            result.Add(new(from, target));
+        }
+        return result;
+    }
+
+    List<Move> GetPawnCaptures(PieceColor pawnColor)
+    {
+        var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
+        var enemies = GetColorBitboard(pawnColor == PieceColor.White ? PieceColor.Black : PieceColor.White);
+        List<Move> result = [];
+        while (pawns != 0)
+        {
+            pawns = Bitboards.PopLeastSignificantOne(pawns, out int from);
+            var targets = Bitboards.pawnCaptures[(int)pawnColor][from] & enemies;
+            while (targets != 0)
+            {
+                targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+                result.Add(new(from, target));
+            }
+        }
+        return result;
+    }
+
+    List<Move> GetKnightMoves(PieceColor knightColor)
+    {
+        var knights = GetPieceOfColorBitboard(PieceType.Knight, knightColor);
+        var enemies = GetColorBitboard(knightColor == PieceColor.White ? PieceColor.Black : PieceColor.White);
+        List<Move> result = [];
+        while (knights != 0)
+        {
+            knights = Bitboards.PopLeastSignificantOne(knights, out int from);
+            var targets = Bitboards.knightMoves[from] & (emptySquareSet | enemies);
+            while (targets != 0)
+            {
+                targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+                result.Add(new(from, target));
+            }
+        }
+        return result;
+    }
+
+    List<Move> GetKingMoves(PieceColor kingColor)
+    {
+        var kings = GetPieceOfColorBitboard(PieceType.King, kingColor);
+        int king = Bitboards.LeastSignificantOne(kings);
+        var enemies = GetColorBitboard(kingColor == PieceColor.White ? PieceColor.Black : PieceColor.White);
+        var targets = Bitboards.kingMoves[king] & (emptySquareSet | enemies);
+        List<Move> result = [];
+        while (targets != 0)
+        {
+            targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+            result.Add(new(king, target));
+        }
+        return result;
     }
 }

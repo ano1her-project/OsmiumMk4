@@ -1,4 +1,6 @@
-﻿namespace Osmium.Core;
+﻿using System.Numerics;
+
+namespace Osmium.Core;
 
 public class Bitboards
 {
@@ -76,13 +78,24 @@ public class Bitboards
     public static ulong ShiftNorthNorthwest(ulong bitboard)
         => (bitboard & notAFile) << 15;
 
+    // ls1b, ms1b:
+
+    public static int LeastSignificantOne(ulong bitboard)
+        => BitOperations.TrailingZeroCount(bitboard);
+
+    public static ulong PopLeastSignificantOne(ulong bitboard, out int ls1b)
+    {
+        ls1b = BitOperations.TrailingZeroCount(bitboard);
+        return bitboard & (bitboard - 1);
+    }
+
     // precalculated attacks:
 
-    static ulong[][] pawnAttacks = PrecalculatePawnAttacks();
-    static ulong[] knightAttacks = PrecalculateKnightAttacks();
-    static ulong[] kingAttacks = PrecalculateKingAttacks();
+    public static ulong[][] pawnCaptures = PrecalculatePawnCaptures();
+    public static ulong[] knightMoves = PrecalculateKnightMoves();
+    public static ulong[] kingMoves = PrecalculateKingMoves();
 
-    static ulong[][] PrecalculatePawnAttacks()
+    static ulong[][] PrecalculatePawnCaptures()
     {
         ulong[][] result = [new ulong[64], new ulong[64]];
         var pawn = 1ul;
@@ -94,7 +107,7 @@ public class Bitboards
         return result;
     }
 
-    static ulong[] PrecalculateKnightAttacks()
+    static ulong[] PrecalculateKnightMoves()
     {
         var result = new ulong[64];
         var knight = 1ul;
@@ -113,7 +126,7 @@ public class Bitboards
         return result;
     }
 
-    static ulong[] PrecalculateKingAttacks()
+    static ulong[] PrecalculateKingMoves()
     {
         var result = new ulong[64];
         var king = 1ul;
