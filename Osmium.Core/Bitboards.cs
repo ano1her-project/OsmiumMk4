@@ -150,15 +150,8 @@ public class Bitboards
         var king = 1ul;
         for (int i = 0; i < 64; i++, king <<= 1)
         {
-            result[i] =
-                ShiftNorth(king) |
-                ShiftNortheast(king) |
-                ShiftEast(king) |
-                ShiftSoutheast(king) |
-                ShiftSouth(king) |
-                ShiftSouthwest(king) |
-                ShiftWest(king) |
-                ShiftNorthwest(king);
+            for (Direction direction = 0; (int)direction < 8; direction++)
+                result[i] |= Shift(direction, king);
         }
         return result;
     }
