@@ -104,6 +104,24 @@ public class CoreTests
     }
 
     [Fact]
+    public void GetRookMoves_WithNoBlockers()
+    {
+        var rooks = 1ul << 45;
+        Position position = new([0, rooks, 0, 0, 0, 0], [rooks, 0]);
+        Assert.Equal(14, position.GetRookMoves(PieceColor.White).Count);
+    }
+
+    [Fact]
+    public void GetRookMoves_WithBlockers()
+    {
+        var rooks = 1ul << 45;
+        var whitePawns = (1ul << 21);
+        var blackPawns = (1ul << 42);
+        Position position = new([whitePawns | blackPawns, rooks, 0, 0, 0, 0], [rooks | whitePawns, blackPawns]);
+        Assert.Equal(9, position.GetRookMoves(PieceColor.White).Count);
+    }
+
+    [Fact]
     public void GetKingMoves()
     {
         var pawns = (1ul << 8) | (1ul << 9) | (1ul << 10) | (1ul << 11) | (1ul << 28) | (1ul << 13) | (1ul << 14) | (1ul << 15);

@@ -131,6 +131,44 @@ public class Position
         return result;
     }
 
+    public List<Move> GetRookMoves(PieceColor rookColor)
+    {
+        var bishops = GetPieceOfColorBitboard(PieceType.Bishop, rookColor);
+        List<Move> result = [];
+        while (bishops != 0)
+        {
+            bishops = Bitboards.PopLeastSignificantOne(bishops, out int from);
+            for (Direction direction = Direction.North; (int)direction < 8; direction += 2)
+            {
+                var ray = Bitboards.GetRayBitboard(direction, from);
+                var piecesOnRay = ray & ~emptySquareSet;
+                ulong targets;
+                if (piecesOnRay != 0)
+                {
+                    // see GetBishopMoves() comments
+                    bool directionIsPositive = Bitboards.IsPositive(direction);
+                    int blocker = directionIsPositive ?               // from Bitboards.cs:
+                        Bitboards.LeastSignificantOne(piecesOnRay) : // "positive" directions correspond to left shifts and the first hit is the ls1b
+                        Bitboards.MostSignificantOne(piecesOnRay);  // "negative" directions correspond to right shifts and the first hit is the ms1b
+                    var blockerBitboard = 1ul << blocker;
+                    targets = (directionIsPositive ? (blockerBitboard - 1) : ~((blockerBitboard << 1) - 1)) & ray;
+                    // "bonus" check on top - if the blocker is an enemy, add a capture move
+                    var enemyColor = rookColor == PieceColor.White ? PieceColor.Black : PieceColor.White;
+                    if ((blockerBitboard & GetColorBitboard(enemyColor)) != 0) // the blocker bitboard "survives" the enemy color mask = the blocker is an enemy
+                        result.Add(new(from, blocker));
+                }
+                else // if there is no blocker
+                    targets = ray;
+                while (targets != 0)
+                {
+                    targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+                    result.Add(new(from, target));
+                }
+            }
+        }
+        return result;
+    }
+
     public List<Move> GetKingMoves(PieceColor kingColor)
     {
         var kings = GetPieceOfColorBitboard(PieceType.King, kingColor);
