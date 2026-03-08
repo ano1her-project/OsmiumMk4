@@ -5,16 +5,18 @@ public class Position
     ulong[] pieceBitboards = new ulong[6];
     ulong[] colorBitboards = new ulong[2];
     ulong emptySquareSet;
+    PieceColor colorToMove;
 
-    public Position(ulong[] p_pieceBitboards, ulong[] p_colorBitboards)
+    public Position(ulong[] p_pieceBitboards, ulong[] p_colorBitboards, PieceColor p_colorToMove)
     {
         pieceBitboards = p_pieceBitboards;
         colorBitboards = p_colorBitboards;
         emptySquareSet = ~(colorBitboards[0] | colorBitboards[1]);
+        colorToMove = p_colorToMove;
     }
 
-    public Position(ulong pawnBitboard, ulong bishopBitboard, ulong knightBitboard, ulong rookBitboard, ulong queenBitboard, ulong kingBitboard, ulong whiteBitboard, ulong blackBitboard) :
-        this([pawnBitboard, bishopBitboard, knightBitboard, rookBitboard, queenBitboard, kingBitboard], [whiteBitboard, blackBitboard]) {}
+    public Position(ulong pawnBitboard, ulong bishopBitboard, ulong knightBitboard, ulong rookBitboard, ulong queenBitboard, ulong kingBitboard, ulong whiteBitboard, ulong blackBitboard, PieceColor colorToMove) :
+        this([pawnBitboard, bishopBitboard, knightBitboard, rookBitboard, queenBitboard, kingBitboard], [whiteBitboard, blackBitboard], colorToMove) {}
 
     public static Position StartingPosition()
     => new([
@@ -24,7 +26,8 @@ public class Position
         (1ul << 0) | (1ul << 7) | (1ul << 56) | (1ul << 63), // rooks
         (1ul << 3) | (1ul << 59), // queens
         (1ul << 4) | (1ul << 60)], // kings
-        [65535ul, 18446462598732840960ul]); // white and black respectively
+        [65535ul, 18446462598732840960ul], // white and black respectively
+        PieceColor.White); 
 
     public ulong GetPieceBitboard(PieceType pieceType)
         => pieceBitboards[(int)pieceType];
@@ -233,7 +236,7 @@ public class Position
 
     //
 
-    public List<Move> GetPseudoLegalMoves(PieceColor colorToMove)
+    public List<Move> GetPseudoLegalMoves()
     {
         return [
             ..GetPawnPushes(colorToMove), 
