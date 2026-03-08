@@ -13,6 +13,16 @@ public class Bitboards
     static readonly ulong notABFiles = ~(aFile | bFile);
     static readonly ulong notGHFiles = ~(gFile | hFile);
 
+    static readonly ulong[] pawnDoublePushTargets = [
+        (1ul << 24) | (1ul << 25) | (1ul << 26) | (1ul << 27) | (1ul << 28) | (1ul << 29) | (1ul << 30) | (1ul << 31), // white
+        (1ul << 32) | (1ul << 33) | (1ul << 34) | (1ul << 35) | (1ul << 36) | (1ul << 37) | (1ul << 38) | (1ul << 39) // black
+    ];
+
+    public static ulong GetPawnDoublePushTargets(PieceColor pawnColor)
+        => pawnDoublePushTargets[(int)pawnColor];
+
+    // bitboard shifts:
+
     // i use west, east etc. instead of left and right in order to distinguish it from a bitwise shift to the left or right
     // in fact, shifting west (~ left) requires a bitwise shift right
     // in fact, shifting east (~ right) requires a bitwise shift left

@@ -40,20 +40,24 @@ public class Position
 
     // get moves by piece:
 
-    ulong GetPawnPushTargetBitboard(PieceColor pawnColor)
-    {
-        var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
-        return (pawnColor == PieceColor.White ? Bitboards.ShiftNorth(pawns) : Bitboards.ShiftSouth(pawns)) & emptySquareSet;
-    }
-
     public List<Move> GetPawnPushes(PieceColor pawnColor)
     {
-        var targets = GetPawnPushTargetBitboard(pawnColor);
+        var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
+        bool forwardIsNorth = pawnColor == PieceColor.White;
+        var singlePushTargets = (forwardIsNorth ? Bitboards.ShiftNorth(pawns) : Bitboards.ShiftSouth(pawns)) 
+            & emptySquareSet;
+        var doublePushTargets = (forwardIsNorth ? Bitboards.ShiftNorth(singlePushTargets) : Bitboards.ShiftSouth(singlePushTargets)) 
+            & emptySquareSet & Bitboards.GetPawnDoublePushTargets(pawnColor);
         List<Move> result = [];
-        while (targets != 0)
+        while (singlePushTargets != 0)
         {
-            targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+            singlePushTargets = Bitboards.PopLeastSignificantOne(singlePushTargets, out int target);
             result.Add(new(target - 8, target));
+        }
+        while (doublePushTargets != 0)
+        {
+            doublePushTargets = Bitboards.PopLeastSignificantOne(doublePushTargets, out int target);
+            result.Add(new(target - 16, target));
         }
         return result;
     }
@@ -88,8 +92,8 @@ public class Position
                 // Let's assume the bishop is at b1 and a blocking piece is at f5.
                 // The ray bitboard will contain all squares in the line from c2 to h7.
                 // The blocker will equal 37 (f5).
-                // (1ul << blocker) - 1 will contain all squares with an index less than 37.
-                // Thus, the targets bitboard will contain all squares in the line from c2 to e4, including e4.
+                // blockerBitboard - 1 will contain all squares with an index less than 37.
+                // Thus, the targets bitboard will contain all squares in the line from c2 to e4 including e4.
                 var ray = Bitboards.GetRayBitboard(direction, from);
                 var piecesOnRay = ray & ~emptySquareSet;
                 ulong targets;
@@ -225,5 +229,20 @@ public class Position
             result.Add(new(king, target));
         }
         return result;
+    }
+
+    //
+
+    public List<Move> GetPseudoLegalMoves(PieceColor colorToMove)
+    {
+        return [
+            ..GetPawnPushes(colorToMove), 
+            ..GetPawnCaptures(colorToMove), 
+            ..GetBishopMoves(colorToMove),
+            ..GetKnightMoves(colorToMove),
+            ..GetRookMoves(colorToMove),
+            ..GetQueenMoves(colorToMove),
+            ..GetKingMoves(colorToMove),
+        ];
     }
 }
