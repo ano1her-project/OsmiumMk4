@@ -4,7 +4,7 @@ using Osmium.Heuristics;
 namespace Osmium.Minimax;
 
 public class Minimax
-{
+{/*
     public enum DebugPrintMode
     {
         ProgressBar,
@@ -126,11 +126,11 @@ public class Minimax
             }
         }
         return bestEval;
-    }
+    }*/
 }
 
 public class Perft
-{
+{/*
     public static int CountLeafNodesAtDepth(Position position, int depth) // perft
     {
         if (depth == 0)
@@ -161,5 +161,5 @@ public class Perft
             Console.WriteLine($"({i + 1}/{moves.Count}) move {moves[i]}: {leafCount}");
         }
         return totalLeafCount;
-    }
+    }*/
 }

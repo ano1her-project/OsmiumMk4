@@ -1,6 +1,6 @@
 ﻿namespace Osmium.Core;
 
-readonly struct Move
+public readonly struct Move
 {
     public readonly int from, to;
 
@@ -9,4 +9,7 @@ readonly struct Move
         from = p_from;
         to = p_to;
     }
+
+    public override string ToString()
+        => $"{Squares.ToString(from)}{Squares.ToString(to)}";
 }

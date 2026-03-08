@@ -3,7 +3,7 @@
 namespace Osmium.Heuristics;
 
 public class Heuristics
-{
+{/*
     public static int Evaluate(Position position) // absolute value, positive for white advantage, negative for black advantage
     {
         int result = 0;
@@ -105,5 +105,5 @@ public class Heuristics
         { Piece.Type.Rook, rookSquareTable },
         { Piece.Type.Queen, queenSquareTable },
         { Piece.Type.King, kingSquareTable },
-    };
+    };*/
 } 

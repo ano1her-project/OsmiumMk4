@@ -6,6 +6,13 @@ public class Position
     ulong[] colorBitboards = new ulong[2];
     ulong emptySquareSet;
 
+    public Position(ulong[] p_pieceBitboards, ulong[] p_colorBitboards)
+    {
+        pieceBitboards = p_pieceBitboards;
+        colorBitboards = p_colorBitboards;
+        emptySquareSet = ~(colorBitboards[0] | colorBitboards[1]);
+    }
+
     public ulong GetPieceBitboard(PieceType pieceType)
         => pieceBitboards[(int)pieceType];
 
@@ -21,21 +28,20 @@ public class Position
         return (pawnColor == PieceColor.White ? Bitboards.ShiftNorth(pawns) : Bitboards.ShiftSouth(pawns)) & emptySquareSet;
     }
 
-    List<Move> GetPawnPushes(PieceColor pawnColor)
+    public List<Move> GetPawnPushes(PieceColor pawnColor)
     {        
         var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
         var targets = (pawnColor == PieceColor.White ? Bitboards.ShiftNorth(pawns) : Bitboards.ShiftSouth(pawns)) & emptySquareSet;
         List<Move> result = [];
         while (targets != 0)
         {
-            pawns = Bitboards.PopLeastSignificantOne(pawns, out int from);
             targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-            result.Add(new(from, target));
+            result.Add(new(target - 8, target));
         }
         return result;
     }
 
-    List<Move> GetPawnCaptures(PieceColor pawnColor)
+    public List<Move> GetPawnCaptures(PieceColor pawnColor)
     {
         var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
         var enemies = GetColorBitboard(pawnColor == PieceColor.White ? PieceColor.Black : PieceColor.White);
@@ -53,7 +59,7 @@ public class Position
         return result;
     }
 
-    List<Move> GetKnightMoves(PieceColor knightColor)
+    public List<Move> GetKnightMoves(PieceColor knightColor)
     {
         var knights = GetPieceOfColorBitboard(PieceType.Knight, knightColor);
         var enemies = GetColorBitboard(knightColor == PieceColor.White ? PieceColor.Black : PieceColor.White);
@@ -71,7 +77,7 @@ public class Position
         return result;
     }
 
-    List<Move> GetKingMoves(PieceColor kingColor)
+    public List<Move> GetKingMoves(PieceColor kingColor)
     {
         var kings = GetPieceOfColorBitboard(PieceType.King, kingColor);
         int king = Bitboards.LeastSignificantOne(kings);

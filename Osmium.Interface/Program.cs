@@ -6,19 +6,18 @@ using System.Diagnostics;
 namespace Osmium.Interface;
 
 internal class Program
-{
+{/*
     static Position position = Position.startingPosition;
     static bool enginePlayingWhite, enginePlayingBlack;
     static bool engineMovesAutomatically;
     static int depth = 3;
     static int evalSortDepth = 3;
-    static Minimax.Minimax.DebugPrintMode minimaxDebugPrintMode = Minimax.Minimax.DebugPrintMode.Elaborate;
+    static Minimax.Minimax.DebugPrintMode minimaxDebugPrintMode = Minimax.Minimax.DebugPrintMode.Elaborate;*/
 
     static void Main()
     {
-        PrettyPrinter.Print(position);
-        CommandLoop();
-    }
+
+    }/*
 
     static void CommandLoop()
     {
@@ -206,85 +205,21 @@ internal class Program
                 break;
         }
         CommandLoop();
-    }
+    }*/
 }
 
 public class PrettyPrinter
 {
-    static readonly Dictionary<Piece, char> unicodePieces = new()
-        {
-            { new(Piece.Type.Pawn, false), '♙'},
-            { new(Piece.Type.Bishop, false), '♗'},
-            { new(Piece.Type.Knight, false), '♘' },
-            { new(Piece.Type.Rook, false), '♖' },
-            { new(Piece.Type.Queen, false), '♕' },
-            { new(Piece.Type.King, false), '♔' },
-            { new(Piece.Type.Pawn, true), '♟'},
-            { new(Piece.Type.Bishop, true), '♝'},
-            { new(Piece.Type.Knight, true), '♞' },
-            { new(Piece.Type.Rook, true), '♜' },
-            { new(Piece.Type.Queen, true), '♛' },
-            { new(Piece.Type.King, true), '♚' }
-        };
-
-    public enum PieceOptions
+    public static void Print(ulong bitboard)
     {
-        Ascii,
-        Unicode,
-        UnicodeInverted
-    }
-
-    public enum BackgroundOptions
-    {
-        Simple,
-        Shaded,
-        ShadedInverted
-    }
-
-    public static void Print(Position position, PieceOptions pieceOptions, BackgroundOptions backgroundOptions, Vector2? from, Vector2[] tos)
-    {
-        string output = "";
         for (int rank = 7; rank >= 0; rank--)
         {
-            output += (rank + 1).ToString() + " ";
-            for (int file = 0; file < 8; file++)
-            {
-                if (position.GetPiece(rank, file) is null)
-                    output += tos.Contains(new(file, rank)) ? "()" : backgroundOptions switch
-                    {
-                        BackgroundOptions.Simple => ". ",
-                        BackgroundOptions.Shaded => GetSquareShadeString(rank, file, false),
-                        BackgroundOptions.ShadedInverted => GetSquareShadeString(rank, file, true),
-                        _ => throw new Exception()
-                    };
-                else
-                    output += pieceOptions switch
-                    {
-                        PieceOptions.Ascii => position.GetPiece(rank, file)?.ToString(),
-                        PieceOptions.Unicode => unicodePieces[(Piece)position.GetPiece(rank, file)],
-                        PieceOptions.UnicodeInverted => unicodePieces[(Piece)position.GetPiece(rank, file)?.GetInverted()],
-                        _ => throw new Exception()
-                    } + ((from is not null && from == new Vector2(file, rank)) ? ")" : " ");
-            }
-            output += "\n";
+            string s = (rank + 1) + " ";
+            for (int i = rank * 8; i < (rank + 1) * 8; i++)
+                s += (((1ul << i) & bitboard) == 0) ? "0 " : "1 ";
+            Console.WriteLine(s);
         }
-        output += "  a b c d e f g h ";
-        Console.WriteLine(output);
+        Console.WriteLine("  a b c d e f g h ");
     }
-
-    public static void Print(Position position)
-        => Print(position, PieceOptions.Ascii, BackgroundOptions.ShadedInverted, null, []);
-
-    public static void Print(Position position, PieceOptions pieceOptions, BackgroundOptions backgroundOptions)
-        => Print(position, pieceOptions, backgroundOptions, null, []);
-
-    public static void Print(Position position, Vector2? from, Vector2[] tos)
-        => Print(position, PieceOptions.Ascii, BackgroundOptions.ShadedInverted, from, tos);
-
-    static bool IsSquareWhite(int rank, int file)
-        => (rank + file) % 2 != 0;
-
-    static string GetSquareShadeString(int rank, int file, bool invert)
-        => (IsSquareWhite(rank, file) ^ invert) ? "░░" : "▒▒";
 }
 

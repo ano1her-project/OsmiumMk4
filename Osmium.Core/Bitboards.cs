@@ -10,8 +10,8 @@ public class Bitboards
     static readonly ulong hFile = (1ul << 7) | (1ul << 15) | (1ul << 23) | (1ul << 31) | (1ul << 39) | (1ul << 47) | (1ul << 55) | (1ul << 63);
     static readonly ulong notAFile = ~aFile;
     static readonly ulong notHFile = ~hFile;
-    static readonly ulong notABFiles = ~(aFile & bFile);
-    static readonly ulong notGHFiles = ~(gFile & hFile);
+    static readonly ulong notABFiles = ~(aFile | bFile);
+    static readonly ulong notGHFiles = ~(gFile | hFile);
 
     // i use west, east etc. instead of left and right in order to distinguish it from a bitwise shift to the left or right
     // in fact, shifting west (~ left) requires a bitwise shift right
