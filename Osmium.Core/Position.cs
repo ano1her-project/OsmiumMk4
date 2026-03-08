@@ -13,6 +13,9 @@ public class Position
         emptySquareSet = ~(colorBitboards[0] | colorBitboards[1]);
     }
 
+    public Position(ulong pawnBitboard, ulong bishopBitboard, ulong knightBitboard, ulong rookBitboard, ulong queenBitboard, ulong kingBitboard, ulong whiteBitboard, ulong blackBitboard) :
+        this([pawnBitboard, bishopBitboard, knightBitboard, rookBitboard, queenBitboard, kingBitboard], [whiteBitboard, blackBitboard]) {}
+
     public static Position StartingPosition()
     => new([
         71776119061282560ul, // pawns
@@ -34,6 +37,8 @@ public class Position
 
     public ulong GetEmptySquareSet()
         => emptySquareSet;
+
+    // get moves by piece:
 
     ulong GetPawnPushTargetBitboard(PieceColor pawnColor)
     {
