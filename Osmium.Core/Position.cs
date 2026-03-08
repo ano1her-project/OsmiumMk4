@@ -42,9 +42,8 @@ public class Position
     }
 
     public List<Move> GetPawnPushes(PieceColor pawnColor)
-    {        
-        var pawns = GetPieceOfColorBitboard(PieceType.Pawn, pawnColor);
-        var targets = (pawnColor == PieceColor.White ? Bitboards.ShiftNorth(pawns) : Bitboards.ShiftSouth(pawns)) & emptySquareSet;
+    {
+        var targets = GetPawnPushTargetBitboard(pawnColor);
         List<Move> result = [];
         while (targets != 0)
         {

@@ -24,6 +24,18 @@ public class Bitboards
     // BUT, within the binary number:
     // ...{9}{8}{7}{6}{5}{4}{3}{2}{1}{0}
 
+    public static ulong Shift(Direction direction, ulong bitboard)
+        => direction switch { 
+        Direction.North => ShiftNorth(bitboard),
+        Direction.Northeast => ShiftNortheast(bitboard),
+        Direction.East => ShiftEast(bitboard),
+        Direction.Southeast => ShiftSoutheast(bitboard),
+        Direction.South => ShiftSouth(bitboard),
+        Direction.Southwest => ShiftSouthwest(bitboard),
+        Direction.West => ShiftWest(bitboard),
+        Direction.Northwest => ShiftNorthwest(bitboard),
+        _ => throw new Exception()};
+
     // cardinal directions:
 
     public static ulong ShiftNorth(ulong bitboard)
@@ -94,6 +106,12 @@ public class Bitboards
     public static ulong[][] pawnCaptures = PrecalculatePawnCaptures();
     public static ulong[] knightMoves = PrecalculateKnightMoves();
     public static ulong[] kingMoves = PrecalculateKingMoves();
+    public static ulong[][] rays = PrecalculateRays();
+
+    public static ulong GetRayBitboard(Direction direction, int origin)
+        => rays[(int)direction][origin];
+
+    //
 
     static ulong[][] PrecalculatePawnCaptures()
     {
@@ -141,6 +159,28 @@ public class Bitboards
                 ShiftSouthwest(king) |
                 ShiftWest(king) |
                 ShiftNorthwest(king);
+        }
+        return result;
+    }
+
+    static ulong[][] PrecalculateRays()
+    {
+        ulong[][] result = new ulong[8][];
+        for (Direction direction = Direction.North; (int)direction < 8; direction++)
+        {
+            result[(int)direction] = new ulong[64];
+            var origin = 1ul;
+            for (int i = 0; i < 64; i++, origin <<= 1)
+            {
+                var square = origin;
+                while (true)
+                {
+                    square = Shift(direction, square);
+                    if (square == 0)
+                        break;
+                    result[(int)direction][i] |= square;
+                }
+            }
         }
         return result;
     }

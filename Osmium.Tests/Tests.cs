@@ -23,6 +23,20 @@ public class CoreTests
     }
 
     [Fact]
+    public void PrecalculatedRayNorth()
+    {
+        var expected = (1ul << 35) | (1ul << 43) | (1ul << 51) | (1ul << 59);
+        Assert.Equal(expected, Bitboards.GetRayBitboard(Direction.North, 27));
+    }
+
+    [Fact]
+    public void PrecalculatedRayNortheast()
+    {
+        var expected = (1ul << 36) | (1ul << 45) | (1ul << 54) | (1ul << 63);
+        Assert.Equal(expected, Bitboards.GetRayBitboard(Direction.Northeast, 27));
+    }
+
+    [Fact]
     public void GetPawnPushes_Simple()
     {
         var pawns = (1ul << 8) | (1ul << 9) | (1ul << 18) | (1ul << 28) | (1ul << 21) | (1ul << 14) | (1ul << 15);
