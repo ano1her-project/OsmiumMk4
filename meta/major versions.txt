@@ -7,7 +7,7 @@ Mk.1 (02.03.2024 - 23.03.2024)
 Mk.2 (01.12.2024 - some time shortly after)
 - was to fix the Mk.1's main problem and search branch by branch, depth first
 - seemingly never even got into a working state?
-Mk.3 "Hydra" (15.02.2026 - 05.03.2026)
+Mk.3 "Hydra" (15.02.2026 - 07.03.2026)
 - solution, multiple projects, multiple files, multiple namespaces
 - github repo
 - Piece class (later struct)
