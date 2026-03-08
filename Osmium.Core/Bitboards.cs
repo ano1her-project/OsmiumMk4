@@ -36,8 +36,8 @@ public class Bitboards
         Direction.Northwest => ShiftNorthwest(bitboard),
         _ => throw new Exception()};
 
-    public static bool IsPositive(Direction direction) // "positive" directions correspond to left shifts and the first hit is the ls1b
-        => direction <= Direction.East;               // "negative" directions correspond to right shifts and the first hit is the ms1b
+    public static bool IsPositive(Direction direction)                       // "positive" directions correspond to left shifts and the first hit is the ls1b
+        => direction <= Direction.East || direction == Direction.Northwest; // "negative" directions correspond to right shifts and the first hit is the ms1b
 
     // cardinal directions:
 

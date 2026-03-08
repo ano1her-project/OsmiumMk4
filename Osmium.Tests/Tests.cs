@@ -86,8 +86,8 @@ public class CoreTests
     public void GetBishopMoves_WithCapture()
     {
         var bishops = 1ul << 45;
-        var whitePawns = (1ul << 18);
-        var blackPawns = (1ul << 38);
+        var whitePawns = 1ul << 18;
+        var blackPawns = 1ul << 38;
         Position position = new([whitePawns | blackPawns, bishops, 0, 0, 0, 0], [bishops | whitePawns, blackPawns]);
         Assert.Equal(7, position.GetBishopMoves(PieceColor.White).Count);
     }
@@ -96,7 +96,7 @@ public class CoreTests
     public void GetKnightMoves()
     {
         var pawns = (1ul << 8) | (1ul << 9) | (1ul << 10) | (1ul << 11) | (1ul << 12) | (1ul << 13) | (1ul << 14) | (1ul << 15);
-        var knights = (1ul << 21);
+        var knights = 1ul << 21;
         var enemyPawns = (1ul << 36) | (1ul << 38) | (1ul << 39);
         Position position = new([pawns | enemyPawns, 0, knights, 0, 0, 0], [pawns | knights, enemyPawns]);
         List<Move> expectedMoves = [new(21, 4), new(21, 6), new(21, 27), new(21, 31), new(21, 36), new(21, 38)];
@@ -107,7 +107,7 @@ public class CoreTests
     public void GetRookMoves_WithNoBlockers()
     {
         var rooks = 1ul << 45;
-        Position position = new([0, rooks, 0, 0, 0, 0], [rooks, 0]);
+        Position position = new([0, 0, 0, rooks, 0, 0], [rooks, 0]);
         Assert.Equal(14, position.GetRookMoves(PieceColor.White).Count);
     }
 
@@ -115,10 +115,28 @@ public class CoreTests
     public void GetRookMoves_WithBlockers()
     {
         var rooks = 1ul << 45;
-        var whitePawns = (1ul << 21);
-        var blackPawns = (1ul << 42);
-        Position position = new([whitePawns | blackPawns, rooks, 0, 0, 0, 0], [rooks | whitePawns, blackPawns]);
+        var whitePawns = 1ul << 21;
+        var blackPawns = 1ul << 42;
+        Position position = new([whitePawns | blackPawns, 0, 0, rooks, 0, 0], [rooks | whitePawns, blackPawns]);
         Assert.Equal(9, position.GetRookMoves(PieceColor.White).Count);
+    }
+
+    [Fact]
+    public void GetQueenMoves_WithNoBlockers()
+    {
+        var queens = 1ul << 45;
+        Position position = new([0, 0, 0, 0, queens, 0], [queens, 0]);
+        Assert.Equal(25, position.GetQueenMoves(PieceColor.White).Count);
+    }
+
+    [Fact]
+    public void GetQueenMoves_WithBlockers()
+    {
+        var queens = 1ul << 45;
+        var whitePawns = (1ul << 13) | (1ul << 27);
+        var blackPawns = (1ul << 42) | (1ul << 52);
+        Position position = new([whitePawns | blackPawns, 0, 0, 0, queens, 0], [queens | whitePawns, blackPawns]);
+        Assert.Equal(16, position.GetQueenMoves(PieceColor.White).Count);
     }
 
     [Fact]
