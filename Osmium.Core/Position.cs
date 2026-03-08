@@ -55,12 +55,12 @@ public class Position
         while (singlePushTargets != 0)
         {
             singlePushTargets = Bitboards.PopLeastSignificantOne(singlePushTargets, out int target);
-            result.Add(new(target - 8, target, PieceType.Pawn));
+            result.Add(new(target - 8, target, PieceType.Pawn, false));
         }
         while (doublePushTargets != 0)
         {
             doublePushTargets = Bitboards.PopLeastSignificantOne(doublePushTargets, out int target);
-            result.Add(new(target - 16, target, PieceType.Pawn));
+            result.Add(new(target - 16, target, PieceType.Pawn, false));
         }
         return result;
     }
@@ -77,7 +77,7 @@ public class Position
             while (targets != 0)
             {
                 targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                result.Add(new(from, target, PieceType.Pawn));
+                result.Add(new(from, target, PieceType.Pawn, true));
             }
         }
         return result;
@@ -111,14 +111,14 @@ public class Position
                     // "bonus" check on top - if the blocker is an enemy, add a capture move
                     var enemyColor = bishopColor == PieceColor.White ? PieceColor.Black : PieceColor.White;
                     if ((blockerBitboard & GetColorBitboard(enemyColor)) != 0) // the blocker bitboard "survives" the enemy color mask = the blocker is an enemy
-                        result.Add(new(from, blocker, PieceType.Bishop));
+                        result.Add(new(from, blocker, PieceType.Bishop, true));
                 }
                 else // if there is no blocker
                     targets = ray; 
                 while (targets != 0)
                 {
                     targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                    result.Add(new(from, target, PieceType.Bishop));
+                    result.Add(new(from, target, PieceType.Bishop, false));
                 }
             }
         }        
@@ -133,11 +133,17 @@ public class Position
         while (knights != 0)
         {
             knights = Bitboards.PopLeastSignificantOne(knights, out int from);
-            var targets = Bitboards.knightMoves[from] & (emptySquareSet | enemies);
+            var targets = Bitboards.knightMoves[from] & emptySquareSet;
             while (targets != 0)
             {
                 targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                result.Add(new(from, target, PieceType.Knight));
+                result.Add(new(from, target, PieceType.Knight, false));
+            }
+            targets = Bitboards.knightMoves[from] & enemies;
+            while (targets != 0)
+            {
+                targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+                result.Add(new(from, target, PieceType.Knight, true));
             }
         }
         return result;
@@ -167,14 +173,14 @@ public class Position
                     // "bonus" check on top - if the blocker is an enemy, add a capture move
                     var enemyColor = rookColor == PieceColor.White ? PieceColor.Black : PieceColor.White;
                     if ((blockerBitboard & GetColorBitboard(enemyColor)) != 0) // the blocker bitboard "survives" the enemy color mask = the blocker is an enemy
-                        result.Add(new(from, blocker, PieceType.Rook));
+                        result.Add(new(from, blocker, PieceType.Rook, true));
                 }
                 else // if there is no blocker
                     targets = ray;
                 while (targets != 0)
                 {
                     targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                    result.Add(new(from, target, PieceType.Rook));
+                    result.Add(new(from, target, PieceType.Rook, false));
                 }
             }
         }
@@ -205,14 +211,14 @@ public class Position
                     // "bonus" check on top - if the blocker is an enemy, add a capture move
                     var enemyColor = queenColor == PieceColor.White ? PieceColor.Black : PieceColor.White;
                     if ((blockerBitboard & GetColorBitboard(enemyColor)) != 0) // the blocker bitboard "survives" the enemy color mask = the blocker is an enemy
-                        result.Add(new(from, blocker, PieceType.Queen));
+                        result.Add(new(from, blocker, PieceType.Queen, true));
                 }
                 else // if there is no blocker
                     targets = ray;
                 while (targets != 0)
                 {
                     targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                    result.Add(new(from, target, PieceType.Queen));
+                    result.Add(new(from, target, PieceType.Queen, false));
                 }
             }
         }
@@ -222,14 +228,20 @@ public class Position
     public List<Move> GetKingMoves(PieceColor kingColor)
     {
         var kings = GetPieceOfColorBitboard(PieceType.King, kingColor);
-        int king = Bitboards.LeastSignificantOne(kings);
-        var enemies = GetColorBitboard(kingColor == PieceColor.White ? PieceColor.Black : PieceColor.White);
-        var targets = Bitboards.kingMoves[king] & (emptySquareSet | enemies);
+        int king = Bitboards.LeastSignificantOne(kings);        
+        var targets = Bitboards.kingMoves[king] & emptySquareSet;
         List<Move> result = [];
         while (targets != 0)
         {
             targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-            result.Add(new(king, target, PieceType.King));
+            result.Add(new(king, target, PieceType.King, false));
+        }
+        var enemies = GetColorBitboard(kingColor == PieceColor.White ? PieceColor.Black : PieceColor.White);
+        targets = Bitboards.kingMoves[king] & enemies;
+        while (targets != 0)
+        {
+            targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+            result.Add(new(king, target, PieceType.King, true));
         }
         return result;
     }
