@@ -59,7 +59,7 @@ public class CoreTests
         var pawns = (1ul << 8) | (1ul << 9) | (1ul << 10) | (1ul << 11) | (1ul << 12) | (1ul << 13) | (1ul << 14) | (1ul << 15);
         var enemyPawns = (1ul << 20) | (1ul << 21) | (1ul << 22);
         Position position = new([pawns | enemyPawns, 0, 0, 0, 0, 0], [pawns, enemyPawns], PieceColor.White);
-        List<Move> expectedMoves = [new(11, 20), new(12, 21), new(13, 20), new(13, 22), new(14, 21), new(15, 22)];
+        List<Move> expectedMoves = [new(11, 20, PieceType.Pawn), new(12, 21, PieceType.Pawn), new(13, 20, PieceType.Pawn), new(13, 22, PieceType.Pawn), new(14, 21, PieceType.Pawn), new(15, 22, PieceType.Pawn)];
         Assert.Equal(expectedMoves, position.GetPawnCaptures(PieceColor.White));
     }
 
@@ -97,7 +97,7 @@ public class CoreTests
         var knights = 1ul << 21;
         var enemyPawns = (1ul << 36) | (1ul << 38) | (1ul << 39);
         Position position = new([pawns | enemyPawns, 0, knights, 0, 0, 0], [pawns | knights, enemyPawns], PieceColor.White);
-        List<Move> expectedMoves = [new(21, 4), new(21, 6), new(21, 27), new(21, 31), new(21, 36), new(21, 38)];
+        List<Move> expectedMoves = [new(21, 4, PieceType.Knight), new(21, 6, PieceType.Knight), new(21, 27, PieceType.Knight), new(21, 31, PieceType.Knight), new(21, 36, PieceType.Knight), new(21, 38, PieceType.Knight)];
         Assert.Equal(expectedMoves, position.GetKnightMoves(PieceColor.White));
     }
 
@@ -144,7 +144,7 @@ public class CoreTests
         var kings = (1ul << 12);
         var enemyPawns = (1ul << 19) | (1ul << 21);
         Position position = new([pawns | enemyPawns, 0, 0, 0, 0, kings], [pawns | kings, enemyPawns], PieceColor.White);
-        List<Move> expectedMoves = [new(12, 3), new(12, 4), new(12, 5), new(12, 19), new(12, 20), new(12, 21)];
+        List<Move> expectedMoves = [new(12, 3, PieceType.King), new(12, 4, PieceType.King), new(12, 5, PieceType.King), new(12, 19, PieceType.King), new(12, 20, PieceType.King), new(12, 21, PieceType.King)];
         Assert.Equal(expectedMoves, position.GetKingMoves(PieceColor.White));
     }
 
