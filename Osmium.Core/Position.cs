@@ -61,13 +61,55 @@ public class Position
         while (pawns != 0)
         {
             pawns = Bitboards.PopLeastSignificantOne(pawns, out int from);
-            var targets = Bitboards.pawnCaptures[(int)pawnColor][from] & enemies;
+            var targets = Bitboards.GetPawnCaptures(pawnColor, from) & enemies;
             while (targets != 0)
             {
                 targets = Bitboards.PopLeastSignificantOne(targets, out int target);
                 result.Add(new(from, target));
             }
         }
+        return result;
+    }
+
+    public List<Move> GetBishopMoves(PieceColor bishopColor)
+    {
+        var bishops = GetPieceOfColorBitboard(PieceType.Bishop, bishopColor);
+        List<Move> result = [];
+        while (bishops != 0)
+        {
+            bishops = Bitboards.PopLeastSignificantOne(bishops, out int from);
+            for (Direction direction = Direction.Northeast; (int)direction < 8; direction += 2)
+            {
+                // Let's assume the bishop is at b1 and a blocking piece is at f5.
+                // The ray bitboard will contain all squares in the line from c2 to h7.
+                // The blocker will equal 37 (f5).
+                // (1ul << blocker) - 1 will contain all squares with an index less than 37.
+                // Thus, the targets bitboard will contain all squares in the line from c2 to e4, including e4.
+                var ray = Bitboards.GetRayBitboard(direction, from);
+                var piecesOnRay = ray & ~emptySquareSet;
+                ulong targets;
+                if (piecesOnRay != 0)
+                {
+                    bool directionIsPositive = Bitboards.IsPositive(direction);
+                    int blocker = directionIsPositive ?               // from Bitboards.cs:
+                        Bitboards.LeastSignificantOne(piecesOnRay) : // "positive" directions correspond to left shifts and the first hit is the ls1b
+                        Bitboards.MostSignificantOne(piecesOnRay);  // "negative" directions correspond to right shifts and the first hit is the ms1b
+                    var blockerBitboard = 1ul << blocker;
+                    targets = (directionIsPositive ? (blockerBitboard - 1) : ~((blockerBitboard << 1) - 1)) & ray;
+                    // "bonus" check on top - if the blocker is an enemy, add a capture move
+                    var enemyColor = bishopColor == PieceColor.White ? PieceColor.Black : PieceColor.White;
+                    if ((blockerBitboard & GetColorBitboard(enemyColor)) != 0) // the blocker bitboard "survives" the enemy color mask = the blocker is an enemy
+                        result.Add(new(from, blocker));
+                }
+                else // if there is no blocker
+                    targets = ray; 
+                while (targets != 0)
+                {
+                    targets = Bitboards.PopLeastSignificantOne(targets, out int target);
+                    result.Add(new(from, target));
+                }
+            }
+        }        
         return result;
     }
 

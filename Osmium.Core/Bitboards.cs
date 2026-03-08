@@ -36,6 +36,9 @@ public class Bitboards
         Direction.Northwest => ShiftNorthwest(bitboard),
         _ => throw new Exception()};
 
+    public static bool IsPositive(Direction direction) // "positive" directions correspond to left shifts and the first hit is the ls1b
+        => direction <= Direction.East;               // "negative" directions correspond to right shifts and the first hit is the ms1b
+
     // cardinal directions:
 
     public static ulong ShiftNorth(ulong bitboard)
@@ -101,12 +104,18 @@ public class Bitboards
         return bitboard & (bitboard - 1);
     }
 
+    public static int MostSignificantOne(ulong bitboard)
+        => 63 - BitOperations.LeadingZeroCount(bitboard);
+
     // precalculated attacks:
 
-    public static ulong[][] pawnCaptures = PrecalculatePawnCaptures();
+    static ulong[][] pawnCaptures = PrecalculatePawnCaptures();
     public static ulong[] knightMoves = PrecalculateKnightMoves();
     public static ulong[] kingMoves = PrecalculateKingMoves();
-    public static ulong[][] rays = PrecalculateRays();
+    static ulong[][] rays = PrecalculateRays();
+
+    public static ulong GetPawnCaptures(PieceColor pawnColor, int pawn)
+        => pawnCaptures[(int)pawnColor][pawn];
 
     public static ulong GetRayBitboard(Direction direction, int origin)
         => rays[(int)direction][origin];
@@ -159,7 +168,7 @@ public class Bitboards
     static ulong[][] PrecalculateRays()
     {
         ulong[][] result = new ulong[8][];
-        for (Direction direction = Direction.North; (int)direction < 8; direction++)
+        for (Direction direction = 0; (int)direction < 8; direction++)
         {
             result[(int)direction] = new ulong[64];
             var origin = 1ul;

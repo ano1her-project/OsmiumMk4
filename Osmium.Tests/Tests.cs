@@ -37,7 +37,7 @@ public class CoreTests
     }
 
     [Fact]
-    public void GetPawnPushes_Simple()
+    public void GetPawnPushes_WithoutBlockers()
     {
         var pawns = (1ul << 8) | (1ul << 9) | (1ul << 18) | (1ul << 28) | (1ul << 21) | (1ul << 14) | (1ul << 15);
         Position position = new([pawns, 0, 0, 0, 0, 0], [pawns, 0]);
@@ -63,6 +63,33 @@ public class CoreTests
         Position position = new([pawns | enemyPawns, 0, 0, 0, 0, 0], [pawns, enemyPawns]);
         List<Move> expectedMoves = [new(11, 20), new(12, 21), new(13, 20), new(13, 22), new(14, 21), new(15, 22)];
         Assert.Equal(expectedMoves, position.GetPawnCaptures(PieceColor.White));
+    }
+
+    [Fact]
+    public void GetBishopMoves_WithNoBlockers()
+    {
+        var bishops = 1ul << 45;
+        Position position = new([0, bishops, 0, 0, 0, 0], [bishops, 0]);
+        Assert.Equal(11, position.GetBishopMoves(PieceColor.White).Count);
+    }
+
+    [Fact]
+    public void GetBishopMoves_WithBlockers()
+    {
+        var bishops = 1ul << 45;
+        var whitePawns = (1ul << 18) | (1ul << 38);
+        Position position = new([whitePawns, bishops, 0, 0, 0, 0], [bishops | whitePawns, 0]);
+        Assert.Equal(6, position.GetBishopMoves(PieceColor.White).Count);
+    }
+
+    [Fact]
+    public void GetBishopMoves_WithCapture()
+    {
+        var bishops = 1ul << 45;
+        var whitePawns = (1ul << 18);
+        var blackPawns = (1ul << 38);
+        Position position = new([whitePawns | blackPawns, bishops, 0, 0, 0, 0], [bishops | whitePawns, blackPawns]);
+        Assert.Equal(7, position.GetBishopMoves(PieceColor.White).Count);
     }
 
     [Fact]

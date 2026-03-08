@@ -17,7 +17,7 @@ public enum PieceColor
 }
 
 public enum Direction // all cardinals are even, all diagonals are odd
-{
+{   
     North,
     Northeast,
     East,
@@ -25,5 +25,5 @@ public enum Direction // all cardinals are even, all diagonals are odd
     South,
     Southwest,
     West,
-    Northwest
+    Northwest,
 }
