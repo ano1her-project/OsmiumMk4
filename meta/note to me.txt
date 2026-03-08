@@ -1,0 +1,7 @@
+after editing meta files in main:
+
+git checkout mk4
+git checkout main -- meta/
+
+and vice versa if editing meta files in mk4
+(i think)
