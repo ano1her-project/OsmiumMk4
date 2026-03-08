@@ -1,9 +1,22 @@
 ﻿using System.Numerics;
+using System.Diagnostics;
 
 namespace Osmium.Core;
 
 public class Bitboards
 {
+    public static readonly ulong[] squareToMask = PrecalculateSquareMasks();
+
+    static ulong[] PrecalculateSquareMasks()
+    {
+        var result = new ulong[64];
+        for (int i = 0; i < 64; i++)
+            result[i] = 1ul << i;
+        return result;
+    }
+
+    //
+
     static readonly ulong aFile = 1ul | (1ul << 8) | (1ul << 16) | (1ul << 24) | (1ul << 32) | (1ul << 40) | (1ul << 48) | (1ul << 56);
     static readonly ulong bFile = (1ul << 1) | (1ul << 9) | (1ul << 17) | (1ul << 25) | (1ul << 33) | (1ul << 41) | (1ul << 49) | (1ul << 57);
     static readonly ulong gFile = (1ul << 6) | (1ul << 14) | (1ul << 22) | (1ul << 30) | (1ul << 38) | (1ul << 46) | (1ul << 54) | (1ul << 62);
@@ -44,7 +57,7 @@ public class Bitboards
         Direction.Southwest => ShiftSouthwest(bitboard),
         Direction.West => ShiftWest(bitboard),
         Direction.Northwest => ShiftNorthwest(bitboard),
-        _ => throw new Exception()};
+        _ => throw new UnreachableException()};
 
     public static bool IsPositive(Direction direction)                       // "positive" directions correspond to left shifts and the first hit is the ls1b
         => direction <= Direction.East || direction == Direction.Northwest; // "negative" directions correspond to right shifts and the first hit is the ms1b
@@ -127,7 +140,7 @@ public class Bitboards
     public static ulong GetPawnCaptures(PieceColor pawnColor, int pawn)
         => pawnCaptures[(int)pawnColor][pawn];
 
-    public static ulong GetRayBitboard(Direction direction, int origin)
+    public static ulong GetRayMask(Direction direction, int origin)
         => rays[(int)direction][origin];
 
     //
