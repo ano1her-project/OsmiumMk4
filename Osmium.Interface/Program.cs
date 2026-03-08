@@ -221,5 +221,21 @@ public class PrettyPrinter
         }
         Console.WriteLine("  a b c d e f g h ");
     }
+
+    public static void PrintBitboardByBitboard(Position position)
+    {
+        for (PieceType piece = 0; (int)piece < 6; piece++)
+        {
+            Console.WriteLine(piece.ToString() + "s");
+            Print(position.GetPieceBitboard(piece));
+        }
+        for (PieceColor color = 0; (int)color < 2; color++)
+        {
+            Console.WriteLine(color.ToString());
+            Print(position.GetColorBitboard(color));
+        }
+        Console.WriteLine("Empty");
+        Print(position.GetEmptySquareSet());
+    }
 }
 

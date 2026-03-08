@@ -13,6 +13,16 @@ public class Position
         emptySquareSet = ~(colorBitboards[0] | colorBitboards[1]);
     }
 
+    public static Position StartingPosition()
+    => new([
+        71776119061282560ul, // pawns
+        (1ul << 2) | (1ul << 5) | (1ul << 58) | (1ul << 61), // bishops
+        (1ul << 1) | (1ul << 6) | (1ul << 57) | (1ul << 62), // knights
+        (1ul << 0) | (1ul << 7) | (1ul << 56) | (1ul << 63), // rooks
+        (1ul << 3) | (1ul << 59), // queens
+        (1ul << 4) | (1ul << 60)], // kings
+        [65535ul, 18446462598732840960ul]); // white and black respectively
+
     public ulong GetPieceBitboard(PieceType pieceType)
         => pieceBitboards[(int)pieceType];
 
@@ -21,6 +31,9 @@ public class Position
 
     public ulong GetPieceOfColorBitboard(PieceType pieceType, PieceColor pieceColor)
         => pieceBitboards[(int)pieceType] & colorBitboards[(int)pieceColor];
+
+    public ulong GetEmptySquareSet()
+        => emptySquareSet;
 
     ulong GetPawnPushTargetBitboard(PieceColor pawnColor)
     {
