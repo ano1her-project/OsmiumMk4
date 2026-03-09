@@ -152,3 +152,22 @@ public class CoreTests
     public void StartingPosition_MoveCount()
         => Assert.Equal(20, Position.StartingPosition().GetPseudoLegalMoves().Count);
 }
+
+public class MinimaxTests
+{
+    [Fact]
+    public void Perft1()
+        => Assert.Equal(20, Perft.CountLeafNodesAtDepth(Position.StartingPosition(), 1));
+
+    [Fact]
+    public void Perft2()
+        => Assert.Equal(400, Perft.CountLeafNodesAtDepth(Position.StartingPosition(), 2));
+
+    [Fact]
+    public void Perft3()
+        => Assert.Equal(8_902, Perft.CountLeafNodesAtDepth(Position.StartingPosition(), 3));
+
+    [Fact]
+    public void Perft4()
+        => Assert.Equal(197_281, Perft.CountLeafNodesAtDepth(Position.StartingPosition(), 4));
+}

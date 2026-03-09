@@ -129,8 +129,8 @@ public class Minimax
     }*/
 }
 
-public class Perft
-{/*
+//public class Perft
+/*{
     public static int CountLeafNodesAtDepth(Position position, int depth) // perft
     {
         if (depth == 0)
@@ -161,5 +161,5 @@ public class Perft
             Console.WriteLine($"({i + 1}/{moves.Count}) move {moves[i]}: {leafCount}");
         }
         return totalLeafCount;
-    }*/
-}
+    }
+}*/

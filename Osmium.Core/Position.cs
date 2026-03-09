@@ -8,7 +8,7 @@ public class Position
     ulong[] pieceBitboards = new ulong[6];
     ulong[] colorBitboards = new ulong[2];
     ulong emptySquareSet;
-    PieceColor colorToMove;
+    public PieceColor colorToMove;
 
     public Position(ulong[] p_pieceBitboards, ulong[] p_colorBitboards, PieceColor p_colorToMove)
     {
@@ -54,16 +54,18 @@ public class Position
             & emptySquareSet;
         var doublePushTargets = (forwardIsNorth ? Bitboards.ShiftNorth(singlePushTargets) : Bitboards.ShiftSouth(singlePushTargets)) 
             & emptySquareSet & Bitboards.GetPawnDoublePushTargets(pawnColor);
+        int offset = pawnColor == PieceColor.White ? -8 : 8;
         List<Move> result = [];
         while (singlePushTargets != 0)
         {
             singlePushTargets = Bitboards.PopLeastSignificantOne(singlePushTargets, out int target);
-            result.Add(new(target - 8, target, PieceType.Pawn, false));
+            result.Add(new(target + offset, target, PieceType.Pawn, false));
         }
+        offset = pawnColor == PieceColor.White ? -16 : 16;
         while (doublePushTargets != 0)
         {
             doublePushTargets = Bitboards.PopLeastSignificantOne(doublePushTargets, out int target);
-            result.Add(new(target - 16, target, PieceType.Pawn, false));
+            result.Add(new(target + offset, target, PieceType.Pawn, false));
         }
         return result;
     }
@@ -199,10 +201,12 @@ public class Position
     // making and unmaking moves:
 
     public void MakeMove(Move move, out UndoInfo undoInfo)
-    {
-        var capturedPiece = PieceType.King;
-        // handle the capture first (if it is one)
+    {        
+        // cache from and to in mask form (we'll need both more than once)
+        var fromMask = Bitboards.squareToMask[move.from];
         var toMask = Bitboards.squareToMask[move.to];
+        // handle the capture first (if it is one)
+        var capturedPiece = PieceType.King;
         if (move.isCapture)
         {
             for (PieceType pieceType = 0; pieceType < PieceType.King; pieceType++)
@@ -210,31 +214,40 @@ public class Position
                 if ((pieceBitboards[(int)pieceType] & toMask) == 0)
                     continue;
                 capturedPiece = pieceType;
-                pieceBitboards[(int)pieceType] &= ~toMask;
+                pieceBitboards[(int)capturedPiece] &= ~toMask;
                 colorBitboards[(int)PieceColors.Opposite(colorToMove)] &= ~toMask;
                 break;
             }
         }
         undoInfo = new(capturedPiece);
         //            
-        var change = Bitboards.squareToMask[move.from] | toMask;
+        var change = fromMask | toMask;
         colorBitboards[(int)colorToMove] ^= change;
         pieceBitboards[(int)move.piece] ^= change;
+        emptySquareSet |= fromMask;
+        emptySquareSet &= ~toMask;
         colorToMove = PieceColors.Opposite(colorToMove);
     }
 
     public void UnmakeMove(Move move, UndoInfo undoInfo)
     {
         colorToMove = PieceColors.Opposite(colorToMove);
-        var change = Bitboards.squareToMask[move.from] | Bitboards.squareToMask[move.to];
+        // cache from and to in mask form (we'll need both more than once)
+        var fromMask = Bitboards.squareToMask[move.from];
+        var toMask = Bitboards.squareToMask[move.to];
+        //        
+        var change = fromMask | toMask;
         colorBitboards[(int)colorToMove] ^= change;
         pieceBitboards[(int)move.piece] ^= change;
+        emptySquareSet ^= change;
         // handle capture
         if (move.isCapture)
         {
             if (undoInfo.capturedPiece == PieceType.King)
                 throw new UnreachableException();
-            pieceBitboards[(int)undoInfo.capturedPiece] |= Bitboards.squareToMask[move.to];
+            pieceBitboards[(int)undoInfo.capturedPiece] |= toMask;
+            colorBitboards[(int)PieceColors.Opposite(colorToMove)] |= toMask;
+            emptySquareSet &= ~toMask;
         }
     }
 
@@ -290,6 +303,20 @@ public class Position
             return true;
         //
         return false;
+    }
+
+    public List<Move> FilterLegalMoves(List<Move> pseudoLegalMoves)
+    {
+        var kingColor = colorToMove;
+        List<Move> result = [];
+        for (int i = 0; i < pseudoLegalMoves.Count; i++)
+        {
+            MakeMove(pseudoLegalMoves[i], out var undoInfo);
+            if (!IsKingInCheck(kingColor))
+                result.Add(pseudoLegalMoves[i]);
+            UnmakeMove(pseudoLegalMoves[i], undoInfo);
+        }
+        return result;
     }
 }
 
