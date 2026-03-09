@@ -127,17 +127,16 @@ public class Position
                     // Say the slider is a bishop at b1 and a blocking piece is at f5.
                     // The ray bitboard will contain all squares in the line from c2 to h7.
                     // The blocker will equal 37 (f5).
-                    // blockerBitboard - 1 will contain all squares with an index less than 37.
-                    // Thus, the targets bitboard will contain all squares in the line segment from c2 to e4 including e4.
+                    // The opposite ray from the blocker will contain all squares in the line from e4 to b1.
+                    // Thus, the targets bitboard will contain all squares in the line segment from c2 to e4.
                     bool directionIsPositive = Bitboards.IsPositive(direction);
                     int blocker = directionIsPositive ?               // from Bitboards.cs:
                         Bitboards.LeastSignificantOne(piecesOnRay) : // "positive" directions correspond to left shifts and the first hit is the ls1b
-                        Bitboards.MostSignificantOne(piecesOnRay);  // "negative" directions correspond to right shifts and the first hit is the ms1b
-                    var blockerMask = Bitboards.squareToMask[blocker];
-                    targets = (directionIsPositive ? (blockerMask - 1) : ~((blockerMask << 1) - 1)) & ray;
+                        Bitboards.MostSignificantOne(piecesOnRay);  // "negative" directions correspond to right shifts and the first hit is the ms1b                    
+                    targets = Bitboards.GetRayMask(Directions.Opposite(direction), blocker) & ray;
                     // "bonus" check on top - if the blocker is an enemy, add a capture move
                     var enemyColor = PieceColors.Opposite(sliderColor);
-                    if ((blockerMask & GetColorBitboard(enemyColor)) != 0) // the blocker bitboard "survives" the enemy color mask = the blocker is an enemy
+                    if ((Bitboards.squareToMask[blocker] & GetColorBitboard(enemyColor)) != 0) // if blocker bitboard "survives" the enemy color mask, it's an enemy
                         result.Add(new(from, blocker, pieceType, true));
                 }
                 else // if there is no blocker
@@ -237,6 +236,60 @@ public class Position
                 throw new UnreachableException();
             pieceBitboards[(int)undoInfo.capturedPiece] |= Bitboards.squareToMask[move.to];
         }
+    }
+
+    // checks, move legality:
+
+    public bool IsKingInCheck(PieceColor kingColor)
+    {
+        var kingMask = GetPieceOfColorBitboard(PieceType.King, kingColor);
+        int king = Bitboards.LeastSignificantOne(kingMask);
+        var enemyColor = PieceColors.Opposite(kingColor);
+        //
+        var checkingPawns = GetPieceOfColorBitboard(PieceType.Pawn, enemyColor) & Bitboards.GetPawnCaptures(kingColor, king);
+        if (checkingPawns != 0)
+            return true;
+        //
+        var checkingKnights = GetPieceOfColorBitboard(PieceType.Knight, enemyColor) & Bitboards.knightMoves[king];
+        if (checkingKnights != 0)
+            return true;
+        //
+        var enemyQueens = GetPieceOfColorBitboard(PieceType.Queen, enemyColor);
+        var enemyCardinalSliders = GetPieceOfColorBitboard(PieceType.Rook, enemyColor) | enemyQueens;
+        var blockers = 0ul;
+        for (Direction direction = Direction.North; (int)direction < 8; direction += 2)
+        {
+            var ray = Bitboards.GetRayMask(direction, king);
+            var piecesOnRay = ray & ~emptySquareSet;
+            if (piecesOnRay == 0)
+                continue;
+            bool directionIsPositive = Bitboards.IsPositive(direction);
+            int blocker = directionIsPositive ?
+                Bitboards.LeastSignificantOne(piecesOnRay) :
+                Bitboards.MostSignificantOne(piecesOnRay);
+            blockers |= Bitboards.squareToMask[blocker];
+        }
+        if ((blockers & enemyCardinalSliders) != 0)
+            return true;
+        //
+        var enemyDiagonalSliders = GetPieceOfColorBitboard(PieceType.Bishop, enemyColor) | enemyQueens;
+        blockers = 0ul;
+        for (Direction direction = Direction.Northeast; (int)direction < 8; direction += 2)
+        {
+            var ray = Bitboards.GetRayMask(direction, king);
+            var piecesOnRay = ray & ~emptySquareSet;
+            if (piecesOnRay == 0)
+                continue;
+            bool directionIsPositive = Bitboards.IsPositive(direction);
+            int blocker = directionIsPositive ?
+                Bitboards.LeastSignificantOne(piecesOnRay) :
+                Bitboards.MostSignificantOne(piecesOnRay);
+            blockers |= Bitboards.squareToMask[blocker];
+        }
+        if ((blockers & enemyDiagonalSliders) != 0)
+            return true;
+        //
+        return false;
     }
 }
 

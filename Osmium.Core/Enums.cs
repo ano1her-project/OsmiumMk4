@@ -33,3 +33,9 @@ public enum Direction // all cardinals are even, all diagonals are odd
     West,
     Northwest,
 }
+
+public class Directions
+{
+    public static Direction Opposite(Direction direction)
+        => (Direction)((int)(direction + 4) % 8);
+}
