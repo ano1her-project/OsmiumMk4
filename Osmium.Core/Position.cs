@@ -30,7 +30,52 @@ public class Position
         (1ul << 3) | (1ul << 59), // queens
         (1ul << 4) | (1ul << 60)], // kings
         [65535ul, 18446462598732840960ul], // white and black respectively
-        PieceColor.White); 
+        PieceColor.White);
+
+    public static Position FromFEN(string fen)
+    {
+        var fields = fen.Split(' ');
+        // 0th (1st) field = piece placement data
+        var pieceBitboards = new ulong[6];
+        var colorBitboards = new ulong[2];
+        var ranks = fields[0].Split('/');
+        for (int rank = 7; rank >= 0; rank--)
+        {
+            int file = 0;
+            foreach (var ch in ranks[7 - rank].ToCharArray())
+            {
+                if (char.IsDigit(ch))
+                    file += ch - '0';
+                else
+                {
+                    int square = 8 * rank + file;
+                    PieceType piece = char.ToLower(ch) switch { 
+                        'p' => PieceType.Pawn,
+                        'b' => PieceType.Bishop,
+                        'n' => PieceType.Knight,
+                        'r' => PieceType.Rook,
+                        'q' => PieceType.Queen,
+                        'k' => PieceType.King
+                    };
+                    pieceBitboards[(int)piece] |= Bitboards.squareToMask[square];
+                    colorBitboards[char.IsUpper(ch) ? 0 : 1] |= Bitboards.squareToMask[square];
+                    file++;
+                }
+            }
+        }
+        // 1st (2nd) field = active color
+        PieceColor colorToMove = fields[1] == "w" ? PieceColor.White : PieceColor.Black;
+        // 2nd (3rd) field = castling rights
+
+        // 3rd (4th) field = en passant target square
+
+        // 4th (5th) field = halfmove clock used for the fifty move rule
+        int halfmoveClock = int.Parse(fields[4]);
+        // 5th (6th) field = fullmove number
+        int fullmoves = int.Parse(fields[5]);
+        //
+        return new(pieceBitboards, colorBitboards, colorToMove);
+    }
 
     public ulong GetPieceBitboard(PieceType pieceType)
         => pieceBitboards[(int)pieceType];

@@ -37,6 +37,27 @@ public class CoreTests
     }
 
     [Fact]
+    public void StartingPositionFromFEN()
+    {
+        var startingPositionFromCtor = Position.StartingPosition();
+        var startingPositionFromFEN = Position.FromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        for (PieceType pieceType = 0; (int)pieceType < 6; pieceType++)
+            Assert.Equal(
+                startingPositionFromCtor.GetPieceBitboard(pieceType),
+                startingPositionFromFEN.GetPieceBitboard(pieceType));
+        for (PieceColor pieceColor = 0; (int)pieceColor < 2; pieceColor++)
+            Assert.Equal(
+                startingPositionFromCtor.GetColorBitboard(pieceColor),
+                startingPositionFromFEN.GetColorBitboard(pieceColor));
+        Assert.Equal(
+            startingPositionFromCtor.GetEmptySquareSet(),
+            startingPositionFromFEN.GetEmptySquareSet());
+        Assert.Equal(
+            startingPositionFromCtor.colorToMove,
+            startingPositionFromFEN.colorToMove);
+    }
+
+    [Fact]
     public void GetPawnPushes_WithoutBlockers()
     {
         var pawns = (1ul << 8) | (1ul << 9) | (1ul << 18) | (1ul << 28) | (1ul << 21) | (1ul << 14) | (1ul << 15);
