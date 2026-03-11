@@ -3,163 +3,91 @@ using Osmium.Heuristics;
 
 namespace Osmium.Minimax;
 
-public class Minimax
-{/*
-    public enum DebugPrintMode
+public static class Minimax
+{
+    public static Move FindBestMove(Position position, int depth, int highestEvalWhiteCanForce, int lowestEvalBlackCanForce, out int bestEval)
     {
-        ProgressBar,
-        Elaborate
-    }
-
-    static readonly int checkmateEval = 50_000;
-    static readonly int stalemateEval = 0;
-
-    public static Move FindBestMove(Position position, int depth, int evalSortDepth, int highestEvalWhiteCanForce, int lowestEvalBlackCanForce, DebugPrintMode debugPrintMode, out int bestEval) // very similar to Evaluate() but also returns the move
-    {
-        var moves = position.GetAllPseudoLegalMoves().ToArray();
-        Console.WriteLine($"Found {moves.Length} move(s)..");
-        // preliminary pass at lower depth to sort the moves by eval
-        if (evalSortDepth < depth && evalSortDepth > 0)
-        {
-            Console.WriteLine($"Sorting moves by eval at depth {evalSortDepth}..");
-            List<int> evals = [];
-            foreach (var move in moves)
-            {
-                position.MakeMove(move, out var undoInfo);
-                if (position.IsKingInCheck(!position.whiteToMove))
-                {
-                    position.UnmakeMove(move, undoInfo);
-                    continue;
-                }
-                evals.Add(Evaluate(position, evalSortDepth - 1, highestEvalWhiteCanForce, lowestEvalBlackCanForce));
-                position.UnmakeMove(move, undoInfo);
-            }
-            Array.Sort(evals.ToArray(), moves); // lowest to highest
-            if (position.whiteToMove)
-                Array.Reverse(moves); // highest to lowest
-        }
-        //
-        Console.WriteLine($"Evaluating moves at depth {depth}..");
-        bestEval = position.whiteToMove ? int.MinValue : int.MaxValue;
-        Move bestMove = moves[0];
-        if (debugPrintMode == DebugPrintMode.ProgressBar)
-            Console.WriteLine(new string(' ', moves.Length) + moves.Length.ToString()); // print progress bar
-        foreach (var move in moves)
+        var colorToMove = position.colorToMove;
+        var pseudoLegalMoves = position.GetPseudoLegalMoves();
+        bestEval = colorToMove == PieceColor.White ? int.MinValue : int.MaxValue;
+        Move bestMove = pseudoLegalMoves[0];
+        foreach (var move in pseudoLegalMoves)
         {
             position.MakeMove(move, out var undoInfo);
-            if (position.IsKingInCheck(!position.whiteToMove))
+            if (position.IsKingInCheck(colorToMove))
             {
                 position.UnmakeMove(move, undoInfo);
                 continue;
             }
             int eval = Evaluate(position, depth - 1, highestEvalWhiteCanForce, lowestEvalBlackCanForce);
             position.UnmakeMove(move, undoInfo);
-            bool isBetterThanPrevious = position.whiteToMove ? (eval > bestEval) : (eval < bestEval);
-            //
-            if (debugPrintMode == DebugPrintMode.ProgressBar)
-                Console.Write("▒"); // print progress bar
-            else// if (debugPrintMode == DebugPrintMode.Elaborate)
-                Console.WriteLine($"{move}: {eval}");
-            //
-            if (!isBetterThanPrevious)
+            if ((colorToMove == PieceColor.White) ? // if move is not better than any previous
+                (eval <= bestEval) :
+                (eval >= bestEval))
                 continue;
             bestEval = eval;
             bestMove = move;
-            if (position.whiteToMove)
+            if (colorToMove == PieceColor.White)
             {
-                if (bestEval >= lowestEvalBlackCanForce) // ..then black will not make the move that would lead to this node.
+                if (bestEval >= lowestEvalBlackCanForce) // ..then black will never make the move that would lead to this node.
                     break;
                 if (bestEval > highestEvalWhiteCanForce)
                     highestEvalWhiteCanForce = bestEval;
             }
-            else // black to move
+            else // color to move == black
             {
-                if (bestEval <= highestEvalWhiteCanForce) // ..then white will not make the move that would lead to this node.
+                if (bestEval <= highestEvalWhiteCanForce) // ..then white will never make the move that would lead to this node.
                     break;
                 if (bestEval < lowestEvalBlackCanForce)
                     lowestEvalBlackCanForce = bestEval;
             }
         }
-        if (debugPrintMode == DebugPrintMode.ProgressBar)
-            Console.WriteLine();
         return bestMove;
     }
 
-    public static Move FindBestMove(Position position, int depth, int evalSortDepth, DebugPrintMode debugPrintMode, out int bestEval)
-        => FindBestMove(position, depth, evalSortDepth, int.MinValue, int.MaxValue, debugPrintMode, out bestEval);
-
     public static int Evaluate(Position position, int depth, int highestEvalWhiteCanForce, int lowestEvalBlackCanForce)
     {
-        // first check for checkmate or stalemate
-        var moves = position.GetAllLegalMoves();
-        if (moves.Count == 0)
-            return position.IsKingInCheck(position.whiteToMove) ? (position.whiteToMove ? -checkmateEval : checkmateEval) : stalemateEval;
-        // if reached the end of depth
+        var colorToMove = position.colorToMove;
+        var legalMoves = position.GetLegalMoves();
+        if (legalMoves.Count == 0)
+            return position.IsKingInCheck(colorToMove) ?
+                (colorToMove == PieceColor.White ? -Evals.checkmate : Evals.checkmate) :
+                Evals.stalemate;
         if (depth == 0)
-            return Heuristics.Evaluate(position);
-        // otehrwise, just recurse deeper
-        int bestEval = position.whiteToMove ? int.MinValue : int.MaxValue;
-        Move bestMove = moves[0];
-        foreach (var move in moves)
+            return Heuristics.Heuristics.Evaluate(position);
+        //
+        int bestEval = colorToMove == PieceColor.White ? int.MinValue : int.MaxValue;
+        foreach (var move in legalMoves)
         {
             position.MakeMove(move, out var undoInfo);
             int eval = Evaluate(position, depth - 1, highestEvalWhiteCanForce, lowestEvalBlackCanForce);
             position.UnmakeMove(move, undoInfo);
-            bool isBetterThanPrevious = position.whiteToMove ? (eval > bestEval) : (eval < bestEval);
-            if (!isBetterThanPrevious)
+            if ((colorToMove == PieceColor.White) ? // if move is not better than any previous
+                (eval <= bestEval) :
+                (eval >= bestEval))
                 continue;
             bestEval = eval;
-            bestMove = move;
-            if (position.whiteToMove)
+            if (colorToMove == PieceColor.White)
             {
-                if (bestEval >= lowestEvalBlackCanForce) // ..then black will not make the move that would lead to this node.
+                if (bestEval >= lowestEvalBlackCanForce) // ..then black will never make the move that would lead to this node.
                     break;
                 if (bestEval > highestEvalWhiteCanForce)
                     highestEvalWhiteCanForce = bestEval;
             }
-            else // black to move
+            else // color to move == black
             {
-                if (bestEval <= highestEvalWhiteCanForce) // ..then white will not make the move that would lead to this node.
+                if (bestEval <= highestEvalWhiteCanForce) // ..then white will never make the move that would lead to this node.
                     break;
                 if (bestEval < lowestEvalBlackCanForce)
                     lowestEvalBlackCanForce = bestEval;
             }
         }
         return bestEval;
-    }*/
+    }
 }
 
-//public class Perft
-/*{
-    public static int CountLeafNodesAtDepth(Position position, int depth) // perft
-    {
-        if (depth == 0)
-            return 1;
-        var moves = position.GetAllLegalMoves();
-        if (depth == 1)
-            return moves.Count;
-        int leafCount = 0;
-        foreach (var move in moves)
-        {
-            position.MakeMove(move, out var undoInfo);
-            leafCount += CountLeafNodesAtDepth(position, depth - 1);
-            position.UnmakeMove(move, undoInfo);
-        }
-        return leafCount;
-    }
-
-    public static int CountLeafNodesAtDepthByMove(Position position, int depth) // perft divide
-    {
-        var moves = position.GetAllLegalMoves();
-        int totalLeafCount = 0;
-        for (int i = 0; i < moves.Count; i++)
-        {
-            position.MakeMove(moves[i], out var undoInfo);
-            int leafCount = CountLeafNodesAtDepth(position, depth - 1);
-            totalLeafCount += leafCount;
-            position.UnmakeMove(moves[i], undoInfo);
-            Console.WriteLine($"({i + 1}/{moves.Count}) move {moves[i]}: {leafCount}");
-        }
-        return totalLeafCount;
-    }
-}*/
+public static class Evals
+{
+    public readonly static int checkmate = 50_000;
+    public readonly static int stalemate = 0;
+}

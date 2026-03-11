@@ -539,6 +539,9 @@ public class Position
         }
         return result;
     }
+
+    public List<Move> GetLegalMoves()
+        => FilterLegalMoves(GetPseudoLegalMoves());
 }
 
 public readonly struct UndoInfo
