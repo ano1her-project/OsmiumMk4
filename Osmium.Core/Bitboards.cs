@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Osmium.Core;
 
-public class Bitboards
+public static class Bitboards
 {
     public static readonly ulong[] squareToMask = PrecalculateSquareMasks();
 
@@ -33,6 +33,15 @@ public class Bitboards
 
     public static ulong GetPawnDoublePushTargets(PieceColor pawnColor)
         => pawnDoublePushTargets[(int)pawnColor];
+
+    static readonly ulong[] requiredEmptyForKingsideCastling = [(1 << 5) | (1 << 6), (1 << 61) | (1 << 62)];
+    static readonly ulong[] requiredEmptyForQueensideCastling = [(1 << 1) | (1 << 2) | (1 << 3), (1 << 57) | (1 << 58) | (1 << 59)];
+
+    public static ulong GetRequiredEmptyForKingsideCastling(PieceColor color)
+        => requiredEmptyForKingsideCastling[(int)color];
+
+    public static ulong GetRequiredEmptyForQueensideCastling(PieceColor color)
+        => requiredEmptyForQueensideCastling[(int)color];
 
     // bitboard shifts:
 

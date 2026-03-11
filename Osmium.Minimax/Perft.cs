@@ -4,15 +4,15 @@ namespace Osmium.Minimax;
 
 public class Perft
 {
-    public static int CountLeafNodesAtDepth(Position position, int depth)
+    public static uint CountLeafNodesAtDepth(Position position, int depth)
     {
         if (depth == 0)
             return 1;
         var pseudoLegalMoves = position.GetPseudoLegalMoves();
         if (depth == 1)
-            return position.FilterLegalMoves(pseudoLegalMoves).Count;
+            return (uint)position.FilterLegalMoves(pseudoLegalMoves).Count;
         var kingColor = position.colorToMove;
-        int leafCount = 0;
+        uint leafCount = 0;
         foreach (var move in pseudoLegalMoves)
         {
             position.MakeMove(move, out var undoInfo);

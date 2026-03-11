@@ -9,17 +9,21 @@ public class Position
     ulong[] colorBitboards = new ulong[2];
     ulong emptySquareSet;
     public PieceColor colorToMove;
+    CastlingRights castlingRights;
+    int enPassantFile;
 
-    public Position(ulong[] p_pieceBitboards, ulong[] p_colorBitboards, PieceColor p_colorToMove)
+    public Position(ulong[] p_pieceBitboards, ulong[] p_colorBitboards, PieceColor p_colorToMove, CastlingRights p_castlingRights, int p_enPassantFile)
     {
         pieceBitboards = p_pieceBitboards;
         colorBitboards = p_colorBitboards;
         emptySquareSet = ~(colorBitboards[0] | colorBitboards[1]);
         colorToMove = p_colorToMove;
+        castlingRights = p_castlingRights;
+        enPassantFile = p_enPassantFile;
     }
 
-    public Position(ulong pawnBitboard, ulong bishopBitboard, ulong knightBitboard, ulong rookBitboard, ulong queenBitboard, ulong kingBitboard, ulong whiteBitboard, ulong blackBitboard, PieceColor colorToMove) :
-        this([pawnBitboard, bishopBitboard, knightBitboard, rookBitboard, queenBitboard, kingBitboard], [whiteBitboard, blackBitboard], colorToMove) {}
+    public Position(ulong pawnBitboard, ulong bishopBitboard, ulong knightBitboard, ulong rookBitboard, ulong queenBitboard, ulong kingBitboard, ulong whiteBitboard, ulong blackBitboard, PieceColor colorToMove, CastlingRights castlingRights, int enPassantFile) :
+        this([pawnBitboard, bishopBitboard, knightBitboard, rookBitboard, queenBitboard, kingBitboard], [whiteBitboard, blackBitboard], colorToMove, castlingRights, enPassantFile) {}
 
     public static Position StartingPosition()
     => new([
@@ -30,7 +34,7 @@ public class Position
         (1ul << 3) | (1ul << 59), // queens
         (1ul << 4) | (1ul << 60)], // kings
         [65535ul, 18446462598732840960ul], // white and black respectively
-        PieceColor.White);
+        PieceColor.White, (CastlingRights)15, -1);
 
     public static Position FromFEN(string fen)
     {
@@ -66,15 +70,24 @@ public class Position
         // 1st (2nd) field = active color
         PieceColor colorToMove = fields[1] == "w" ? PieceColor.White : PieceColor.Black;
         // 2nd (3rd) field = castling rights
-
+        CastlingRights castlingRights = 0;
+        foreach (var ch in fields[2].ToCharArray())
+        {
+            castlingRights |= ch switch { 
+                'K' => CastlingRights.WhiteKingside,
+                'Q' => CastlingRights.WhiteQueenside,
+                'k' => CastlingRights.BlackKingside,
+                'q' => CastlingRights.BlackQueenside,
+            };
+        }
         // 3rd (4th) field = en passant target square
-
+        int enPassantFile = fields[3][0] - 'a';
         // 4th (5th) field = halfmove clock used for the fifty move rule
         int halfmoveClock = int.Parse(fields[4]);
         // 5th (6th) field = fullmove number
         int fullmoves = int.Parse(fields[5]);
         //
-        return new(pieceBitboards, colorBitboards, colorToMove);
+        return new(pieceBitboards, colorBitboards, colorToMove, castlingRights, enPassantFile);
     }
 
     public ulong GetPieceBitboard(PieceType pieceType)
@@ -104,13 +117,13 @@ public class Position
         while (singlePushTargets != 0)
         {
             singlePushTargets = Bitboards.PopLeastSignificantOne(singlePushTargets, out int target);
-            result.Add(new(target + offset, target, PieceType.Pawn, false));
+            result.AddRange(WithOrWithoutPromotions(target + offset, target, false, pawnColor));
         }
         offset = pawnColor == PieceColor.White ? -16 : 16;
         while (doublePushTargets != 0)
         {
             doublePushTargets = Bitboards.PopLeastSignificantOne(doublePushTargets, out int target);
-            result.Add(new(target + offset, target, PieceType.Pawn, false));
+            result.Add(new(target + offset, target, PieceType.Pawn, false, Move.Flag.PawnDoublePush));
         }
         return result;
     }
@@ -123,14 +136,32 @@ public class Position
         while (pawns != 0)
         {
             pawns = Bitboards.PopLeastSignificantOne(pawns, out int from);
-            var targets = Bitboards.GetPawnCaptures(pawnColor, from) & enemies;
+            var captureMask = Bitboards.GetPawnCaptures(pawnColor, from);
+            var targets = captureMask & enemies;
             while (targets != 0)
             {
                 targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                result.Add(new(from, target, PieceType.Pawn, true));
+                result.AddRange(WithOrWithoutPromotions(from, target, true, pawnColor));
             }
+            // en passant:
+            int enPassantSquare = Squares.GetEnPassantSquare(enPassantFile, pawnColor);
+            if ((captureMask & Bitboards.squareToMask[enPassantSquare]) != 0)
+                result.Add(new(from, enPassantSquare, PieceType.Pawn, true, Move.Flag.EnPassant));
         }
         return result;
+    }
+
+    static Move[] WithOrWithoutPromotions(int from, int to, bool isCapture, PieceColor pawnColor)
+    {
+        if (Squares.IsPromotionSquare(to, pawnColor))
+        {
+            var result = new Move[4];
+            for (int i = 0; i < 4; i++)
+                result[i] = new(from, to, PieceType.Pawn, isCapture, i + Move.Flag.PromotionToQueen);
+            return result;
+        }
+        else
+            return [new(from, to, PieceType.Pawn, isCapture, Move.Flag.None)];     
     }
 
     public List<Move> GetKnightMoves(PieceColor knightColor)
@@ -145,13 +176,13 @@ public class Position
             while (targets != 0)
             {
                 targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                result.Add(new(from, target, PieceType.Knight, false));
+                result.Add(new(from, target, PieceType.Knight, false, Move.Flag.None));
             }
             targets = Bitboards.knightMoves[from] & enemies;
             while (targets != 0)
             {
                 targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                result.Add(new(from, target, PieceType.Knight, true));
+                result.Add(new(from, target, PieceType.Knight, true, Move.Flag.None));
             }
         }
         return result;
@@ -184,14 +215,14 @@ public class Position
                     // "bonus" check on top - if the blocker is an enemy, add a capture move
                     var enemyColor = PieceColors.Opposite(sliderColor);
                     if ((Bitboards.squareToMask[blocker] & GetColorBitboard(enemyColor)) != 0) // if blocker bitboard "survives" the enemy color mask, it's an enemy
-                        result.Add(new(from, blocker, pieceType, true));
+                        result.Add(new(from, blocker, pieceType, true, Move.Flag.None));
                 }
                 else // if there is no blocker
                     targets = ray;
                 while (targets != 0)
                 {
                     targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                    result.Add(new(from, target, pieceType, false));
+                    result.Add(new(from, target, pieceType, false, Move.Flag.None));
                 }
             }
         }
@@ -216,15 +247,32 @@ public class Position
         while (targets != 0)
         {
             targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-            result.Add(new(king, target, PieceType.King, false));
+            result.Add(new(king, target, PieceType.King, false, Move.Flag.None));
         }
         var enemies = GetColorBitboard(PieceColors.Opposite(kingColor));
         targets = Bitboards.kingMoves[king] & enemies;
         while (targets != 0)
         {
             targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-            result.Add(new(king, target, PieceType.King, true));
+            result.Add(new(king, target, PieceType.King, true, Move.Flag.None));
         }
+        // castling kingside:
+        if ((kingColor == PieceColor.White && castlingRights.HasFlag(CastlingRights.WhiteKingside)) ||
+            (kingColor == PieceColor.Black && castlingRights.HasFlag(CastlingRights.BlackKingside)))
+        {
+            var requiredEmpty = Bitboards.GetRequiredEmptyForKingsideCastling(kingColor);
+            if ((emptySquareSet & requiredEmpty) == emptySquareSet)
+                result.Add(new(king, king + 2, PieceType.King, false, Move.Flag.CastlingKingside));
+        }
+        // castling queenside:
+        if ((kingColor == PieceColor.White && castlingRights.HasFlag(CastlingRights.WhiteQueenside)) ||
+            (kingColor == PieceColor.Black && castlingRights.HasFlag(CastlingRights.BlackQueenside)))
+        {
+            var requiredEmpty = Bitboards.GetRequiredEmptyForQueensideCastling(kingColor);
+            if ((emptySquareSet & requiredEmpty) == emptySquareSet)
+                result.Add(new(king, king - 2, PieceType.King, false, Move.Flag.CastlingQueenside));
+        }
+        //
         return result;
     }
 
@@ -246,53 +294,181 @@ public class Position
     // making and unmaking moves:
 
     public void MakeMove(Move move, out UndoInfo undoInfo)
-    {        
+    {
         // cache from and to in mask form (we'll need both more than once)
         var fromMask = Bitboards.squareToMask[move.from];
         var toMask = Bitboards.squareToMask[move.to];
-        // handle the capture first (if it is one)
+        // handle capture
         var capturedPiece = PieceType.King;
         if (move.isCapture)
         {
-            for (PieceType pieceType = 0; pieceType < PieceType.King; pieceType++)
+            ulong capturedSquareMask;
+            if (move.flag == Move.Flag.EnPassant)
             {
-                if ((pieceBitboards[(int)pieceType] & toMask) == 0)
-                    continue;
-                capturedPiece = pieceType;
-                pieceBitboards[(int)capturedPiece] &= ~toMask;
-                colorBitboards[(int)PieceColors.Opposite(colorToMove)] &= ~toMask;
-                break;
+                capturedPiece = PieceType.Pawn;
+                capturedSquareMask = Bitboards.Shift(colorToMove == PieceColor.White ? Direction.South : Direction.North, toMask);
+                emptySquareSet |= capturedSquareMask;
             }
+            else
+            {
+                capturedSquareMask = toMask;
+                for (PieceType pieceType = 0; pieceType < PieceType.King; pieceType++)
+                {
+                    if ((pieceBitboards[(int)pieceType] & toMask) == 0)
+                        continue;
+                    capturedPiece = pieceType;
+                    break;
+                }
+            }
+            pieceBitboards[(int)capturedPiece] &= ~capturedSquareMask;
+            colorBitboards[(int)PieceColors.Opposite(colorToMove)] &= ~capturedSquareMask;
+            // emptySquareSet |= capturedSquareMask; // we could, but unless the move is en passant (see above) it would get instantly overriden below anyways
         }
-        undoInfo = new(capturedPiece);
-        //            
-        var change = fromMask | toMask;
-        colorBitboards[(int)colorToMove] ^= change;
-        pieceBitboards[(int)move.piece] ^= change;
+        undoInfo = new(capturedPiece, castlingRights, enPassantFile);
+        // main move element
+        pieceBitboards[(int)move.piece] &= ~fromMask;
+        pieceBitboards[(int)move.piece] |= toMask;
+        colorBitboards[(int)colorToMove] &= ~fromMask;
+        colorBitboards[(int)colorToMove] |= toMask;
         emptySquareSet |= fromMask;
         emptySquareSet &= ~toMask;
+        enPassantFile = -1;
+        // the remaining special move flags
+        int rookFrom;
+        ulong rookFromMask, rookToMask;
+        switch (move.flag)
+        {
+            case Move.Flag.PawnDoublePush:
+                enPassantFile = move.from % 8;
+                break;
+            case Move.Flag.CastlingKingside:
+                rookFrom = colorToMove == PieceColor.White ? 7 : 63;
+                rookFromMask = Bitboards.squareToMask[rookFrom];
+                rookToMask = Bitboards.squareToMask[rookFrom - 2];
+                pieceBitboards[(int)PieceType.Rook] &= ~rookFromMask;
+                pieceBitboards[(int)PieceType.Rook] |= rookToMask;
+                colorBitboards[(int)colorToMove] &= ~rookFromMask;
+                colorBitboards[(int)colorToMove] |= rookToMask;
+                emptySquareSet |= rookFromMask;
+                emptySquareSet &= ~rookToMask;
+                break;
+            case Move.Flag.CastlingQueenside:
+                rookFrom = colorToMove == PieceColor.White ? 0 : 56;
+                rookFromMask = Bitboards.squareToMask[rookFrom];
+                rookToMask = Bitboards.squareToMask[rookFrom + 3];
+                pieceBitboards[(int)PieceType.Rook] &= ~rookFromMask;
+                pieceBitboards[(int)PieceType.Rook] |= rookToMask;
+                colorBitboards[(int)colorToMove] &= ~rookFromMask;
+                colorBitboards[(int)colorToMove] |= rookToMask;
+                emptySquareSet |= rookFromMask;
+                emptySquareSet &= ~rookToMask;
+                break;
+            case Move.Flag.PromotionToQueen:
+                pieceBitboards[(int)PieceType.Pawn] &= ~toMask;
+                pieceBitboards[(int)PieceType.Queen] |= toMask;
+                break;
+            case Move.Flag.PromotionToRook:
+                pieceBitboards[(int)PieceType.Pawn] &= ~toMask;
+                pieceBitboards[(int)PieceType.Rook] |= toMask;
+                break;
+            case Move.Flag.PromotionToKnight:
+                pieceBitboards[(int)PieceType.Pawn] &= ~toMask;
+                pieceBitboards[(int)PieceType.Knight] |= toMask;
+                break;
+            case Move.Flag.PromotionToBishop:
+                pieceBitboards[(int)PieceType.Pawn] &= ~toMask;
+                pieceBitboards[(int)PieceType.Bishop] |= toMask;
+                break;
+        }
+        // remove castling rights if king or rook moved
+        if (move.piece == PieceType.King)
+            castlingRights &= ~(colorToMove == PieceColor.White ?
+                    (CastlingRights.WhiteKingside | CastlingRights.WhiteQueenside) :
+                    (CastlingRights.BlackKingside | CastlingRights.BlackQueenside));
+        if (move.from == 7 || move.to == 7)
+            castlingRights &= ~CastlingRights.WhiteKingside;
+        if (move.from == 0 || move.to == 0)
+            castlingRights &= ~CastlingRights.WhiteQueenside;
+        if (move.from == 63 || move.to == 63)
+            castlingRights &= ~CastlingRights.BlackKingside;
+        if (move.from == 56 || move.to == 56)
+            castlingRights &= ~CastlingRights.BlackQueenside;
+        // flip color to move
         colorToMove = PieceColors.Opposite(colorToMove);
     }
 
-    public void UnmakeMove(Move move, UndoInfo undoInfo)
+    public void UnmakeMove(Move move, UndoInfo undoInfo) 
     {
+        // all elements of a Move are handled in reverse order (compared to MakeMove) - last hired first fired
+        // 
+        // flip color to move
         colorToMove = PieceColors.Opposite(colorToMove);
+        // restore variables stored in undo info
+        enPassantFile = undoInfo.previousEnPassantFile;
+        castlingRights = undoInfo.previousCastlingRights;
         // cache from and to in mask form (we'll need both more than once)
         var fromMask = Bitboards.squareToMask[move.from];
         var toMask = Bitboards.squareToMask[move.to];
-        //        
-        var change = fromMask | toMask;
-        colorBitboards[(int)colorToMove] ^= change;
-        pieceBitboards[(int)move.piece] ^= change;
-        emptySquareSet ^= change;
+        // special move flags
+        int rookFrom;
+        ulong rookFromMask, rookToMask;
+        switch (move.flag)
+        {
+            case Move.Flag.CastlingKingside:
+                rookFrom = colorToMove == PieceColor.White ? 7 : 63;
+                rookFromMask = Bitboards.squareToMask[rookFrom];
+                rookToMask = Bitboards.squareToMask[rookFrom - 2];
+                pieceBitboards[(int)PieceType.Rook] |= rookFromMask;
+                pieceBitboards[(int)PieceType.Rook] &= ~rookToMask;
+                colorBitboards[(int)colorToMove] |= rookFromMask;
+                colorBitboards[(int)colorToMove] &= ~rookToMask;
+                emptySquareSet &= ~rookFromMask;
+                emptySquareSet |= rookToMask;
+                break;
+            case Move.Flag.CastlingQueenside:
+                rookFrom = colorToMove == PieceColor.White ? 0 : 56;
+                rookFromMask = Bitboards.squareToMask[rookFrom];
+                rookToMask = Bitboards.squareToMask[rookFrom + 3];
+                pieceBitboards[(int)PieceType.Rook] |= rookFromMask;
+                pieceBitboards[(int)PieceType.Rook] &= ~rookToMask;
+                colorBitboards[(int)colorToMove] |= rookFromMask;
+                colorBitboards[(int)colorToMove] &= ~rookToMask;
+                emptySquareSet &= ~rookFromMask;
+                emptySquareSet |= rookToMask;
+                break;
+            case Move.Flag.PromotionToQueen:
+                pieceBitboards[(int)PieceType.Queen] &= ~toMask;
+                pieceBitboards[(int)PieceType.Pawn] |= toMask;
+                break;
+            case Move.Flag.PromotionToRook:
+                pieceBitboards[(int)PieceType.Rook] &= ~toMask;
+                pieceBitboards[(int)PieceType.Pawn] |= toMask;
+                break;
+            case Move.Flag.PromotionToKnight:
+                pieceBitboards[(int)PieceType.Knight] &= ~toMask;
+                pieceBitboards[(int)PieceType.Pawn] |= toMask;
+                break;
+            case Move.Flag.PromotionToBishop:
+                pieceBitboards[(int)PieceType.Bishop] &= ~toMask;
+                pieceBitboards[(int)PieceType.Pawn] |= toMask;
+                break;
+        }
+        // main move element
+        pieceBitboards[(int)move.piece] |= fromMask;
+        pieceBitboards[(int)move.piece] &= ~toMask;
+        colorBitboards[(int)colorToMove] |= fromMask;
+        colorBitboards[(int)colorToMove] &= ~toMask;
+        emptySquareSet &= ~fromMask;
+        emptySquareSet |= toMask;
         // handle capture
         if (move.isCapture)
         {
-            if (undoInfo.capturedPiece == PieceType.King)
-                throw new UnreachableException();
-            pieceBitboards[(int)undoInfo.capturedPiece] |= toMask;
-            colorBitboards[(int)PieceColors.Opposite(colorToMove)] |= toMask;
-            emptySquareSet &= ~toMask;
+            var capturedSquareMask = (move.flag == Move.Flag.EnPassant) ?
+                Bitboards.Shift(colorToMove == PieceColor.White ? Direction.South : Direction.North, toMask) :
+                toMask;
+            pieceBitboards[(int)undoInfo.capturedPiece] |= capturedSquareMask;
+            colorBitboards[(int)PieceColors.Opposite(colorToMove)] |= capturedSquareMask;
+            emptySquareSet &= ~capturedSquareMask;
         }
     }
 
@@ -368,9 +544,13 @@ public class Position
 public readonly struct UndoInfo
 {
     public readonly PieceType capturedPiece;
+    public readonly CastlingRights previousCastlingRights;
+    public readonly int previousEnPassantFile;
 
-    public UndoInfo(PieceType p_capturedPiece)
+    public UndoInfo(PieceType p_capturedPiece, CastlingRights p_previousCastlingRights, int p_previousEnPassantFile)
     {
         capturedPiece = p_capturedPiece;
+        previousCastlingRights = p_previousCastlingRights;
+        previousEnPassantFile = p_previousEnPassantFile;
     }
 }

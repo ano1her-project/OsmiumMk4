@@ -16,7 +16,7 @@ public enum PieceColor
     Black
 }
 
-public class PieceColors
+public static class PieceColors
 {
     public static PieceColor Opposite(PieceColor pieceColor)
         => pieceColor == PieceColor.White ? PieceColor.Black : PieceColor.White;
@@ -34,8 +34,17 @@ public enum Direction // all cardinals are even, all diagonals are odd
     Northwest,
 }
 
-public class Directions
+public static class Directions
 {
     public static Direction Opposite(Direction direction)
         => (Direction)((int)(direction + 4) % 8);
+}
+
+[Flags] public enum CastlingRights : byte
+{
+    None = 0,
+    WhiteKingside = 1,
+    WhiteQueenside = 2,
+    BlackKingside = 4,
+    BlackQueenside = 8
 }

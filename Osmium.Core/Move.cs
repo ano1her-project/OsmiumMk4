@@ -5,13 +5,28 @@ public readonly struct Move
     public readonly int from, to;
     public readonly PieceType piece;
     public readonly bool isCapture;
+    public readonly Flag flag;
 
-    public Move(int p_from, int p_to, PieceType p_piece, bool p_isCapture)
+    public Move(int p_from, int p_to, PieceType p_piece, bool p_isCapture, Flag p_flag)
     {
         from = p_from;
         to = p_to;
         piece = p_piece;
         isCapture = p_isCapture;
+        flag = p_flag;
+    }
+
+    public enum Flag
+    {
+        None,
+        PawnDoublePush,
+        CastlingKingside,
+        CastlingQueenside,
+        EnPassant,
+        PromotionToQueen,
+        PromotionToRook,
+        PromotionToKnight,
+        PromotionToBishop
     }
 
     public override string ToString()
