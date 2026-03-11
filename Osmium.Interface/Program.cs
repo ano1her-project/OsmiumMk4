@@ -25,6 +25,7 @@ internal class Program
     {
         if (printPosition)
         {
+            PrettyPrinter.Print(position);
             printPosition = false;
         }
         if ((position.colorToMove == PieceColor.White && enginePlayingWhite) ||
@@ -160,35 +161,3 @@ internal class Program
         printPosition = true;
     }
 }
-
-public class PrettyPrinter
-{
-    public static void Print(ulong bitboard)
-    {
-        for (int rank = 7; rank >= 0; rank--)
-        {
-            string s = (rank + 1) + " ";
-            for (int i = rank * 8; i < (rank + 1) * 8; i++)
-                s += (((1ul << i) & bitboard) == 0) ? "0 " : "1 ";
-            Console.WriteLine(s);
-        }
-        Console.WriteLine("  a b c d e f g h ");
-    }
-
-    public static void PrintBitboardByBitboard(Position position)
-    {
-        for (PieceType piece = 0; (int)piece < 6; piece++)
-        {
-            Console.WriteLine(piece.ToString() + "s");
-            Print(position.GetPieceBitboard(piece));
-        }
-        for (PieceColor color = 0; (int)color < 2; color++)
-        {
-            Console.WriteLine(color.ToString());
-            Print(position.GetColorBitboard(color));
-        }
-        Console.WriteLine("Empty");
-        Print(position.GetEmptySquareSet());
-    }
-}
-
