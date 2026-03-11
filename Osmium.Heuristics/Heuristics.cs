@@ -1,31 +1,26 @@
-﻿using Osmium.Core;
+﻿using System.Numerics;
+using Osmium.Core;
 
 namespace Osmium.Heuristics;
 
-public class Heuristics
-{/*
-    public static int Evaluate(Position position) // absolute value, positive for white advantage, negative for black advantage
+public static class Heuristics
+{
+    public static int Evaluate(Position position) // absolute value in centipawns, positive for white advantage, negative for black advantage
     {
         int result = 0;
-        for (int rank = 0; rank < 8; rank++)
+        for (PieceType pieceType = 0; pieceType < PieceType.King; pieceType++)
         {
-            for (int file = 0; file < 8; file++)
-            {
-                var piece = position.GetPiece(rank, file);
-                if (piece is null)
-                    continue;
-                Piece.Type type = (Piece.Type)piece?.type; // getting around the nulls
-                bool isWhite = (bool)piece?.isWhite;
-                int pieceValue = materialValue[(int)type] + pieceSquareTable[type][isWhite ? rank : (7 - rank), file];
-                result += pieceValue * (isWhite ? 1 : -1);
-            }
+            var whitePieces = position.GetPieceOfColorBitboard(pieceType, PieceColor.White);
+            var blackPieces = position.GetPieceOfColorBitboard(pieceType, PieceColor.Black);
+            int diff = BitOperations.PopCount(whitePieces) - BitOperations.PopCount(blackPieces);
+            result += diff * materialValue[(int)pieceType];
         }
         return result;
     }
 
     static readonly int[] materialValue = [100, 330, 310, 500, 900, 0];        
 
-    static readonly int[,] pawnSquareTable =
+    /*static readonly int[,] pawnSquareTable =
     {
         {  0,  0,  0,  0,  0,  0,  0,  0 },
         { 50, 50, 50, 50, 50, 50, 50, 50 },
