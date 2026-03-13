@@ -36,5 +36,5 @@ public static class Squares
     }
 
     public static int GetEnPassantSquare(int enPassantFile, PieceColor colorToMove)
-        => (enPassantFile == -1) ? 0 : enPassantSquare[(int)colorToMove][enPassantFile];
+        => enPassantSquare[(int)colorToMove][enPassantFile];
 }

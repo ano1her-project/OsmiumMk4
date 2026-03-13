@@ -45,6 +45,9 @@ public static class Minimax
         return bestMove;
     }
 
+    public static Move FindBestMove(Position position, int depth, out int bestEval)
+        => FindBestMove(position, depth, int.MinValue, int.MaxValue, out bestEval);
+
     public static int Evaluate(Position position, int depth, int highestEvalWhiteCanForce, int lowestEvalBlackCanForce)
     {
         var colorToMove = position.colorToMove;

@@ -74,7 +74,7 @@ internal class Program
                 else if (subs[1] == "find")
                 {
                     var sw = Stopwatch.StartNew();
-                    var bestMove = Minimax.Minimax.FindBestMove(position, depth, int.MinValue, int.MaxValue, out int eval);
+                    var bestMove = Minimax.Minimax.FindBestMove(position, depth, out int eval);
                     var time = sw.Elapsed;
                     Console.WriteLine($"Found best move {bestMove} in {time}. Eval = {eval}.");
                 }

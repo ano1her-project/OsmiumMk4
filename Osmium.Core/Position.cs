@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Osmium.Core;
 
@@ -78,10 +79,11 @@ public class Position
                 'Q' => CastlingRights.WhiteQueenside,
                 'k' => CastlingRights.BlackKingside,
                 'q' => CastlingRights.BlackQueenside,
+                _ => 0
             };
         }
         // 3rd (4th) field = en passant target square
-        int enPassantFile = fields[3][0] - 'a';
+        int enPassantFile = (fields[3] == "-") ? -1 : fields[3][0] - 'a';
         // 4th (5th) field = halfmove clock used for the fifty move rule
         int halfmoveClock = int.Parse(fields[4]);
         // 5th (6th) field = fullmove number
@@ -89,6 +91,92 @@ public class Position
         //
         return new(pieceBitboards, colorBitboards, colorToMove, castlingRights, enPassantFile);
     }
+
+    public string ToFEN()
+    {
+        string fen = "";
+        // 0th (1st) field = piece placement data
+        PieceType?[] pieceTypeMailbox = new PieceType?[64];
+        PieceColor?[] pieceColorMailbox = new PieceColor?[64];
+        // build mailbox
+        for (PieceType pieceType = 0; (int)pieceType < 6; pieceType++)
+        {
+            var pieces = GetPieceBitboard(pieceType);
+            while (pieces != 0)
+            {
+                pieces = Bitboards.PopLeastSignificantOne(pieces, out int piece);
+                pieceTypeMailbox[piece] = pieceType;
+            }
+        }
+        for (PieceColor pieceColor = 0; (int)pieceColor < 2; pieceColor++)
+        {
+            var pieces = GetColorBitboard(pieceColor);
+            while (pieces != 0)
+            {
+                pieces = Bitboards.PopLeastSignificantOne(pieces, out int piece);
+                pieceColorMailbox[piece] = pieceColor;
+            }
+        }
+        // iterate over mailbox        
+        for (int rank = 7; rank >= 0; rank--)
+        {
+            int consecutiveEmptySquares = 0;
+            for (int i = rank * 8; i < (rank + 1) * 8; i++)
+            {
+                if (pieceTypeMailbox[i] is null)
+                    consecutiveEmptySquares++;
+                else
+                {
+                    if (consecutiveEmptySquares != 0)
+                        fen += consecutiveEmptySquares.ToString();
+                    var square = pieceTypeMailbox[i] switch
+                    {
+                        PieceType.Pawn => "p",
+                        PieceType.Bishop => "b",
+                        PieceType.Knight => "n",
+                        PieceType.Rook => "r",
+                        PieceType.Queen => "q",
+                        PieceType.King => "k",
+                    };
+                    if (pieceColorMailbox[i] is null)
+                        throw new Exception();
+                    if (pieceColorMailbox[i] == PieceColor.White)
+                        square = square.ToUpper();
+                    fen += square;
+                    consecutiveEmptySquares = 0;
+                }
+            }
+            if (consecutiveEmptySquares != 0)
+                fen += consecutiveEmptySquares.ToString();
+            fen += (rank == 0) ? " " : "/";
+        }
+        // 1st (2nd) field = active color
+        fen += (colorToMove == PieceColor.White ? "w" : "b") + " ";
+        // 2nd (3rd) field = castling availability
+        if (castlingRights == 0)
+            fen += "-";
+        else
+        {
+            if (castlingRights.HasFlag(CastlingRights.WhiteKingside))
+                fen += "K";
+            if (castlingRights.HasFlag(CastlingRights.WhiteQueenside))
+                fen += "Q";
+            if (castlingRights.HasFlag(CastlingRights.BlackKingside))
+                fen += "k";
+            if (castlingRights.HasFlag(CastlingRights.BlackQueenside))
+                fen += "q";
+        }        
+        fen += " ";
+        // 3rd (4th) field = en passant target square
+        fen += ((enPassantFile == -1) ? "-" : Squares.GetEnPassantSquare(enPassantFile, colorToMove)) + " ";
+        // 4th (5th) field = halfmove clock used for the fifty move rule
+        fen += "0 ";
+        // 5th (6th) field = fullmove number
+        return fen + "1";
+    }
+
+    public override string ToString()
+        => ToFEN();
 
     public ulong GetPieceBitboard(PieceType pieceType)
         => pieceBitboards[(int)pieceType];
@@ -144,9 +232,12 @@ public class Position
                 result.AddRange(WithOrWithoutPromotions(from, target, true, pawnColor));
             }
             // en passant:
-            int enPassantSquare = Squares.GetEnPassantSquare(enPassantFile, pawnColor);
-            if ((captureMask & Bitboards.squareToMask[enPassantSquare]) != 0)
-                result.Add(new(from, enPassantSquare, PieceType.Pawn, true, Move.Flag.EnPassant));
+            if (enPassantFile != -1)
+            {
+                int enPassantSquare = Squares.GetEnPassantSquare(enPassantFile, pawnColor);
+                if ((captureMask & Bitboards.squareToMask[enPassantSquare]) != 0)
+                    result.Add(new(from, enPassantSquare, PieceType.Pawn, true, Move.Flag.EnPassant));
+            }
         }
         return result;
     }
@@ -486,6 +577,10 @@ public class Position
         //
         var checkingKnights = GetPieceOfColorBitboard(PieceType.Knight, enemyColor) & Bitboards.knightMoves[king];
         if (checkingKnights != 0)
+            return true;
+        //
+        var checkingKings = GetPieceOfColorBitboard(PieceType.King, enemyColor) & Bitboards.kingMoves[king];
+        if (checkingKings != 0)
             return true;
         //
         var enemyQueens = GetPieceOfColorBitboard(PieceType.Queen, enemyColor);

@@ -172,6 +172,14 @@ public class CoreTests
     [Fact]
     public void StartingPosition_MoveCount()
         => Assert.Equal(20, Position.StartingPosition().GetPseudoLegalMoves().Count);
+
+    [Fact]
+    public void IsKingInCheck_Sample()
+    {
+        var position = Position.FromFEN("2b5/7p/p3pk2/b1p1K2Q/P1r5/8/2P2PPP/R6R b - - 4 29");
+        Assert.True(position.IsKingInCheck(PieceColor.White));
+        Assert.True(position.IsKingInCheck(PieceColor.Black));
+    }
 }
 
 public class PerftTests
