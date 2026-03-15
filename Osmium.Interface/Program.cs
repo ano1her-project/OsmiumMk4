@@ -1,8 +1,7 @@
 ﻿using Osmium.Core;
-using Osmium.Minimax;
 using Osmium.Heuristics;
+using Osmium.Minimax;
 using System.Diagnostics;
-using System.ComponentModel.Design;
 
 namespace Osmium.Interface;
 
@@ -16,7 +15,7 @@ internal class Program
     static bool printPosition = true;
 
     static void Main()
-    {
+    {        
         while (true)
             CommandLoop();
     }
@@ -28,9 +27,12 @@ internal class Program
             PrettyPrinter.Print(position);
             printPosition = false;
         }
-        if ((position.colorToMove == PieceColor.White && enginePlayingWhite) ||
-            (position.colorToMove == PieceColor.Black && enginePlayingBlack))
+        if ((position.colorToMove == PieceColor.White && enginePlayingWhite && engineMovesAutomatically) ||
+            (position.colorToMove == PieceColor.Black && enginePlayingBlack && engineMovesAutomatically))
+        {
             LetEngineMakeMove();
+            return;
+        }
         //
         Console.Write("> ");
         string input = Console.ReadLine();
@@ -57,7 +59,7 @@ internal class Program
                 SetOption(subs);
                 break;
             case "fen":
-                //Console.WriteLine(position.ToFEN());
+                Console.WriteLine(position.ToFEN());
                 break;
             case "heuristic":
                 Console.WriteLine($"Heuristic evaluation = {Heuristics.Heuristics.Evaluate(position)}.");
@@ -78,6 +80,12 @@ internal class Program
                     var time = sw.Elapsed;
                     Console.WriteLine($"Found best move {bestMove} in {time}. Eval = {eval}.");
                 }
+                break;
+            default:
+                if (subs.Length != 1 || input.Length != 2)
+                    Console.WriteLine("invalid command.");
+                else
+                    HandlePlayerMove(input);
                 break;
         }
     }
@@ -158,6 +166,52 @@ internal class Program
         var time = sw.Elapsed;
         position.MakeMove(bestMove, out _);
         Console.WriteLine($"Found best move {bestMove} in {time} and played it. Eval = {eval}.");
+        printPosition = true;
+    }
+
+    static void HandlePlayerMove(string input) // dear god this is vile
+    {        
+        int from = Squares.FromString(input);
+        var fromMask = Bitboards.squareToMask[from];
+        // what piece is on this square?
+        PieceType? piece = null;
+        for (PieceType pieceType = 0; pieceType <= PieceType.King; pieceType++)
+        {
+            if ((position.GetPieceBitboard(pieceType) & fromMask) == 0)
+                continue;
+            piece = pieceType;
+            break;
+        }
+        // what moves can this piece make?
+        if (piece is null)
+        {
+            Console.WriteLine("empty square. aborting move.");
+            return;
+        }
+        if ((position.GetColorBitboard(position.colorToMove) & fromMask) == 0)
+        {
+            Console.WriteLine("that's not your piece. aborting move.");
+            return;
+        }
+        var pseudoLegalMoves = position.GetPseudoLegalMoves().Where(move => move.from == from).ToList();
+        var moves = position.FilterLegalMoves(pseudoLegalMoves);
+        var tos = moves.Select(move => move.to).ToArray();
+        PrettyPrinter.Print(position, [..tos, from]);
+        // player chooses target:
+        var inputTo = Console.ReadLine();
+        if (inputTo is null || inputTo.Length != 2)
+        {
+            Console.WriteLine("invalid input. aborting move.");
+            return;
+        }
+        var to = Squares.FromString(inputTo);
+        int moveIndex = Array.IndexOf(tos, to);
+        if (moveIndex == -1)
+        {
+            Console.WriteLine("invalid destination. aborting move.");
+            return;
+        }
+        position.MakeMove(moves[moveIndex], out _);
         printPosition = true;
     }
 }

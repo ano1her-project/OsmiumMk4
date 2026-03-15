@@ -1,5 +1,4 @@
 ﻿using Osmium.Core;
-using System.Runtime.Intrinsics.X86;
 
 namespace Osmium.Interface;
 
@@ -33,7 +32,7 @@ public static class PrettyPrinter
         Print(position.GetEmptySquareSet());
     }
 
-    public static void Print(Position position) // hella expensive but i dont have to CARE
+    public static void Print(Position position, int[] markings)
     {
         PieceType?[] pieceTypeMailbox = new PieceType?[64];
         PieceColor?[] pieceColorMailbox = new PieceColor?[64];
@@ -45,7 +44,7 @@ public static class PrettyPrinter
             {
                 pieces = Bitboards.PopLeastSignificantOne(pieces, out int piece);
                 pieceTypeMailbox[piece] = pieceType;
-            }            
+            }
         }
         for (PieceColor pieceColor = 0; (int)pieceColor < 2; pieceColor++)
         {
@@ -64,17 +63,18 @@ public static class PrettyPrinter
             {
                 string square;
                 if (pieceTypeMailbox[i] is null)
-                    square = ". ";
+                    square = markings.Contains(i) ? "()" : ". ";
                 else
                 {
-                    square = pieceTypeMailbox[i] switch { 
-                        PieceType.Pawn => "p ",
-                        PieceType.Bishop => "b ",
-                        PieceType.Knight => "n ",
-                        PieceType.Rook => "r ",
-                        PieceType.Queen => "q ",
-                        PieceType.King => "k ",
-                    };
+                    square = pieceTypeMailbox[i] switch
+                    {
+                        PieceType.Pawn => "p",
+                        PieceType.Bishop => "b",
+                        PieceType.Knight => "n",
+                        PieceType.Rook => "r",
+                        PieceType.Queen => "q",
+                        PieceType.King => "k",
+                    } + (markings.Contains(i) ? ")" : " ");
                     if (pieceColorMailbox[i] is null)
                         throw new Exception();
                     if (pieceColorMailbox[i] == PieceColor.White)
@@ -86,4 +86,7 @@ public static class PrettyPrinter
         }
         Console.WriteLine("  a b c d e f g h ");
     }
+
+    public static void Print(Position position)
+        => Print(position, []);
 }

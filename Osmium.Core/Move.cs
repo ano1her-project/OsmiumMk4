@@ -31,6 +31,19 @@ public readonly struct Move
 
     public override string ToString()
         => $"{Squares.ToString(from)}{(isCapture ? "x" : "")}{Squares.ToString(to)}";
+
+    public static Move[] WithOrWithoutPromotions(int from, int to, bool isCapture, PieceColor pawnColor)
+    {
+        if (Squares.IsPromotionSquare(to, pawnColor))
+        {
+            var result = new Move[4];
+            for (int i = 0; i < 4; i++)
+                result[i] = new(from, to, PieceType.Pawn, isCapture, i + Move.Flag.PromotionToQueen);
+            return result;
+        }
+        else
+            return [new(from, to, PieceType.Pawn, isCapture, Move.Flag.None)];
+    }
 }
 
 // Information about what piece is moved depends on the position and a theoretically pure Move struct wouldn't need it.

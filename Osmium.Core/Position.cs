@@ -10,8 +10,8 @@ public class Position
     ulong[] colorBitboards = new ulong[2];
     ulong emptySquareSet;
     public PieceColor colorToMove;
-    CastlingRights castlingRights;
-    int enPassantFile;
+    public CastlingRights castlingRights;
+    public int enPassantFile;
 
     public Position(ulong[] p_pieceBitboards, ulong[] p_colorBitboards, PieceColor p_colorToMove, CastlingRights p_castlingRights, int p_enPassantFile)
     {
@@ -205,7 +205,7 @@ public class Position
         while (singlePushTargets != 0)
         {
             singlePushTargets = Bitboards.PopLeastSignificantOne(singlePushTargets, out int target);
-            result.AddRange(WithOrWithoutPromotions(target + offset, target, false, pawnColor));
+            result.AddRange(Move.WithOrWithoutPromotions(target + offset, target, false, pawnColor));
         }
         offset = pawnColor == PieceColor.White ? -16 : 16;
         while (doublePushTargets != 0)
@@ -229,7 +229,7 @@ public class Position
             while (targets != 0)
             {
                 targets = Bitboards.PopLeastSignificantOne(targets, out int target);
-                result.AddRange(WithOrWithoutPromotions(from, target, true, pawnColor));
+                result.AddRange(Move.WithOrWithoutPromotions(from, target, true, pawnColor));
             }
             // en passant:
             if (enPassantFile != -1)
@@ -240,20 +240,7 @@ public class Position
             }
         }
         return result;
-    }
-
-    static Move[] WithOrWithoutPromotions(int from, int to, bool isCapture, PieceColor pawnColor)
-    {
-        if (Squares.IsPromotionSquare(to, pawnColor))
-        {
-            var result = new Move[4];
-            for (int i = 0; i < 4; i++)
-                result[i] = new(from, to, PieceType.Pawn, isCapture, i + Move.Flag.PromotionToQueen);
-            return result;
-        }
-        else
-            return [new(from, to, PieceType.Pawn, isCapture, Move.Flag.None)];     
-    }
+    } 
 
     public List<Move> GetKnightMoves(PieceColor knightColor)
     {
