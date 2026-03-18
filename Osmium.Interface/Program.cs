@@ -15,7 +15,7 @@ internal class Program
     static bool printPosition = true;
 
     static void Main()
-    {        
+    {
         while (true)
             CommandLoop();
     }
