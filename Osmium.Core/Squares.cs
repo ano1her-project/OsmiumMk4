@@ -1,4 +1,6 @@
-﻿namespace Osmium.Core;
+﻿using System.Runtime.CompilerServices;
+
+namespace Osmium.Core;
 
 public static class Squares
 {
@@ -21,6 +23,10 @@ public static class Squares
         => (pawnColor == PieceColor.White) ?
         (square >= 56) : // white
         (square < 8);   // black
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Mirror(int square)
+        => square ^ 56;
 
     static readonly int[][] enPassantSquare = PrecalculateEnPassantSquares();
 

@@ -15,6 +15,16 @@ public class CoreTests
         => Assert.Equal(26, Squares.FromString("c4"));
 
     [Fact]
+    public void MirrorSquares()
+    {
+        for (int rank = 0, mirroredRank = 7; rank < 8; rank++, mirroredRank--)
+        {
+            for (int file = 0; file < 8; file++)
+                Assert.Equal(mirroredRank * 8 + file, Squares.Mirror(rank * 8 + file));
+        }
+    }
+
+    [Fact]
     public void ShiftEastSoutheast()
     {
         var bitboard = (1ul << 24) | (1ul << 25) | (1ul << 26) | (1ul << 27) | (1ul << 28) | (1ul << 29) | (1ul << 30) | (1ul << 31);
