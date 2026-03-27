@@ -10,14 +10,14 @@ public static class Heuristics
         int result = 0;
         for (PieceType pieceType = 0; pieceType < PieceType.King; pieceType++)
         {
-            int pieceTypeTimesEight = (int)pieceType * 8;
+            int pieceTypeOffset = (int)pieceType << 6;
             var whitePieces = position.GetPieceOfColorBitboard(pieceType, PieceColor.White);            
             int whitePieceCount = 0;
             while (whitePieces != 0)
             {
                 whitePieces = Bitboards.PopLeastSignificantOne(whitePieces, out int piece);
                 whitePieceCount++;
-                result += pieceSquareTable[pieceTypeTimesEight + Squares.Mirror(piece)];
+                result += pieceSquareTable[pieceTypeOffset + Squares.Mirror(piece)];
             }
             var blackPieces = position.GetPieceOfColorBitboard(pieceType, PieceColor.Black);
             int blackPieceCount = 0;
@@ -25,7 +25,7 @@ public static class Heuristics
             {
                 blackPieces = Bitboards.PopLeastSignificantOne(blackPieces, out int piece);
                 blackPieceCount++;
-                result -= pieceSquareTable[pieceTypeTimesEight + piece];
+                result -= pieceSquareTable[pieceTypeOffset + piece];
             }
             int difference = whitePieceCount - blackPieceCount;
             result += difference * materialValue[(int)pieceType];
