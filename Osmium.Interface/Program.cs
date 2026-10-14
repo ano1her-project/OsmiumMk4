@@ -97,7 +97,7 @@ internal class Program
         switch (subs[1])
         {
             case "position":                
-                if (subs[2] == "startpos" || subs[1] == "start")
+                if (subs[2] == "startpos" || subs[2] == "start")
                     position = Position.StartingPosition();
                 else if (subs[2] == "kiwipete")
                     position = Position.FromFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 99 99");
@@ -192,12 +192,12 @@ internal class Program
         // what moves can this piece make?
         if (piece is null)
         {
-            Console.WriteLine("empty square. aborting move.");
+            Console.WriteLine("square is empty. aborting move.");
             return;
         }
         if ((position.GetColorBitboard(position.colorToMove) & fromMask) == 0)
         {
-            Console.WriteLine("that's not your piece. aborting move.");
+            Console.WriteLine("piece color doesn't match color to move. aborting move.");
             return;
         }
         var pseudoLegalMoves = position.GetPseudoLegalMoves().Where(move => move.from == from).ToList();
@@ -216,7 +216,7 @@ internal class Program
         int moveIndex = Array.IndexOf(tos, to);
         if (moveIndex == -1)
         {
-            Console.WriteLine("invalid destination. aborting move.");
+            Console.WriteLine("invalid destination for this piece. aborting move.");
             return;
         }
         position.MakeMove(moves[moveIndex], out _);

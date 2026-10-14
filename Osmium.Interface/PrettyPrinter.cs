@@ -1,9 +1,18 @@
 ﻿using Osmium.Core;
+using System.Numerics;
+using static Osmium.Interface.PrettyPrinter;
 
 namespace Osmium.Interface;
 
 public static class PrettyPrinter
 {
+    public enum BackgroundOptions
+    {
+        Simple,
+        Shaded,
+        ShadedInverted
+    }
+
     public static void Print(ulong bitboard)
     {
         for (int rank = 7; rank >= 0; rank--)
@@ -16,7 +25,7 @@ public static class PrettyPrinter
         Console.WriteLine("  a b c d e f g h ");
     }
 
-    public static void PrintBitboardByBitboard(Position position)
+    public static void PrintIndividualBitboards(Position position)
     {
         for (PieceType piece = 0; (int)piece < 6; piece++)
         {
@@ -32,7 +41,7 @@ public static class PrettyPrinter
         Print(position.GetEmptySquareSet());
     }
 
-    public static void Print(Position position, int[] markings)
+    public static void Print(Position position, BackgroundOptions backgroundOptions, int[] markings)
     {
         PieceType?[] pieceTypeMailbox = new PieceType?[64];
         PieceColor?[] pieceColorMailbox = new PieceColor?[64];
@@ -63,7 +72,13 @@ public static class PrettyPrinter
             {
                 string square;
                 if (pieceTypeMailbox[i] is null)
-                    square = markings.Contains(i) ? "()" : ". ";
+                    square = markings.Contains(i) ? "()" : backgroundOptions switch
+                    {
+                        BackgroundOptions.Simple => ". ",
+                        BackgroundOptions.Shaded => GetSquareShadeString(i, false),
+                        BackgroundOptions.ShadedInverted => GetSquareShadeString(i, true),
+                        _ => throw new Exception()
+                    };
                 else
                 {
                     square = pieceTypeMailbox[i] switch
@@ -88,5 +103,19 @@ public static class PrettyPrinter
     }
 
     public static void Print(Position position)
-        => Print(position, []);
+        => Print(position, BackgroundOptions.ShadedInverted, []);
+
+    public static void Print(Position position, BackgroundOptions backgroundOptions)
+        => Print(position, backgroundOptions, []);
+
+    public static void Print(Position position, int[] markings)
+        => Print(position, BackgroundOptions.ShadedInverted, markings);
+
+    static bool IsSquareWhite(int square)
+        => ((square / 8) % 2 == 0) ? 
+        (square % 2 == 1) :
+        (square % 2 == 0);
+    
+    static string GetSquareShadeString(int square, bool invert)
+        => (IsSquareWhite(square) ^ invert) ? "░░" : "▒▒";
 }
