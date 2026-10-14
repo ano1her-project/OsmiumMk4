@@ -6,7 +6,7 @@ namespace Osmium.Tests;
 public class PuzzleTests
 {
     static void FindBestMove(string fen, string expectedMove, int depth)
-        => Assert.Equal(expectedMove, Minimax.Minimax.FindBestMove(Position.FromFEN(fen), depth, out _).ToString());
+        => Assert.Equal(expectedMove, Minimax.Minimax.FindBestMove(Position.FromFEN(fen), depth, 3, out _).ToString());
 
     // ultimately, all of these methods are the same
     // they're split off solely for aesthetics and legibility

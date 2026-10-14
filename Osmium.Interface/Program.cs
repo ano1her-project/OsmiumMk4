@@ -11,6 +11,7 @@ internal class Program
     static bool enginePlayingWhite, enginePlayingBlack;
     static bool engineMovesAutomatically;
     static int depth = 3;
+    static int depthForSortByEval = 3;
 
     static bool printPosition = true;
 
@@ -47,6 +48,7 @@ internal class Program
                 Console.WriteLine("set black (engine | player)           - Sets who controls the black pieces.");
                 Console.WriteLine("set auto (yes | no)                   - Sets whether the engine waits for the engine make move command during its turn.");
                 Console.WriteLine("set depth (value)                     - Sets the engine search depth.");
+                Console.WriteLine("set depthforsortbyeval (value)        - Sets the depth for the preliminary sort of moves by eval.");
                 Console.WriteLine("fen                                   - Prints the FEN of the current position.");
                 Console.WriteLine("heuristic                             - Calculates the heuristic evaluation of the current position.");
                 Console.WriteLine("evaluate                              - Evaluates the current position using minimax.");
@@ -76,7 +78,7 @@ internal class Program
                 else if (subs[1] == "find")
                 {
                     var sw = Stopwatch.StartNew();
-                    var bestMove = Minimax.Minimax.FindBestMove(position, depth, out int eval);
+                    var bestMove = Minimax.Minimax.FindBestMove(position, depth, depthForSortByEval, out int eval);
                     var time = sw.Elapsed;
                     Console.WriteLine($"Found best move {bestMove} in {time}. Eval = {eval}.");
                 }
@@ -153,6 +155,11 @@ internal class Program
             case "depth":
                 depth = int.Parse(subs[2]);
                 break;
+            case "depthforsortbyeval":
+            case "evalsortdepth":
+            case "sortdepth":
+                depthForSortByEval = int.Parse(subs[2]);
+                break;
             default:
                 Console.WriteLine("invalid argument.");
                 break;
@@ -162,7 +169,7 @@ internal class Program
     static void LetEngineMakeMove()
     {
         var sw = Stopwatch.StartNew();
-        var bestMove = Minimax.Minimax.FindBestMove(position, depth, int.MinValue, int.MaxValue, out int eval);
+        var bestMove = Minimax.Minimax.FindBestMove(position, depth, depthForSortByEval, int.MinValue, int.MaxValue, out int eval);
         var time = sw.Elapsed;
         position.MakeMove(bestMove, out _);
         Console.WriteLine($"Found best move {bestMove} in {time} and played it. Eval = {eval}.");
@@ -198,6 +205,7 @@ internal class Program
         var tos = moves.Select(move => move.to).ToArray();
         PrettyPrinter.Print(position, [..tos, from]);
         // player chooses target:
+        Console.Write(">> ");
         var inputTo = Console.ReadLine();
         if (inputTo is null || inputTo.Length != 2)
         {

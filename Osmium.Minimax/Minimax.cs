@@ -5,10 +5,31 @@ namespace Osmium.Minimax;
 
 public static class Minimax
 {
-    public static Move FindBestMove(Position position, int depth, int highestEvalWhiteCanForce, int lowestEvalBlackCanForce, out int bestEval)
+    public static Move FindBestMove(Position position, int depth, int depthForSortByEval, int highestEvalWhiteCanForce, int lowestEvalBlackCanForce, out int bestEval)
     {
         var colorToMove = position.colorToMove;
-        var pseudoLegalMoves = position.GetPseudoLegalMoves();
+        var pseudoLegalMoves = position.GetPseudoLegalMoves().ToArray();
+        // sort moves by eval at a lower depth first
+        if (depth > depthForSortByEval && depthForSortByEval > 0)
+        {
+            int[] evals = new int[pseudoLegalMoves.Length];
+            for (int i = 0; i < pseudoLegalMoves.Length; i++)
+            {
+                position.MakeMove(pseudoLegalMoves[i], out var undoInfo);
+                if (position.IsKingInCheck(colorToMove))
+                {
+                    position.UnmakeMove(pseudoLegalMoves[i], undoInfo);
+                    evals[i] = int.MinValue;
+                    continue;
+                }
+                evals[i] = Evaluate(position, depthForSortByEval - 1, highestEvalWhiteCanForce, lowestEvalBlackCanForce);
+                position.UnmakeMove(pseudoLegalMoves[i], undoInfo);
+            }
+            Array.Sort(evals, pseudoLegalMoves); // lowest to highest
+            if (colorToMove == PieceColor.White)
+                Array.Reverse(pseudoLegalMoves); // highest to lowest
+        }
+        //
         bestEval = colorToMove == PieceColor.White ? int.MinValue : int.MaxValue;
         Move bestMove = pseudoLegalMoves[0];
         foreach (var move in pseudoLegalMoves)
@@ -45,8 +66,8 @@ public static class Minimax
         return bestMove;
     }
 
-    public static Move FindBestMove(Position position, int depth, out int bestEval)
-        => FindBestMove(position, depth, int.MinValue, int.MaxValue, out bestEval);
+    public static Move FindBestMove(Position position, int depth, int depthForSortByEval, out int bestEval)
+        => FindBestMove(position, depth, depthForSortByEval, int.MinValue, int.MaxValue, out bestEval);
 
     public static int Evaluate(Position position, int depth, int highestEvalWhiteCanForce, int lowestEvalBlackCanForce)
     {
