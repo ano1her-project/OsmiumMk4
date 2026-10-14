@@ -13,13 +13,14 @@ public static class Minimax
         if (depth > depthForSortByEval && depthForSortByEval > 0)
         {
             int[] evals = new int[pseudoLegalMoves.Length];
+            int illegalMoveEval = colorToMove == PieceColor.White ? int.MinValue : int.MaxValue;
             for (int i = 0; i < pseudoLegalMoves.Length; i++)
             {
                 position.MakeMove(pseudoLegalMoves[i], out var undoInfo);
                 if (position.IsKingInCheck(colorToMove))
                 {
                     position.UnmakeMove(pseudoLegalMoves[i], undoInfo);
-                    evals[i] = int.MinValue;
+                    evals[i] = illegalMoveEval;
                     continue;
                 }
                 evals[i] = Evaluate(position, depthForSortByEval - 1, highestEvalWhiteCanForce, lowestEvalBlackCanForce);
